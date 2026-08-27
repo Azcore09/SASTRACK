@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="14" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.sastrack.controller.SearchController">
+    <padding><Insets top="4" right="4" bottom="20" left="4"/></padding>
+
+    <Label fx:id="titleLabel" text="Search Results" styleClass="page-title"/>
+
+    <TableView fx:id="table" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colKind" text="Record type" prefWidth="130"/>
+            <TableColumn fx:id="colRef" text="Reference" prefWidth="200"/>
+            <TableColumn fx:id="colDetail" text="Detail" prefWidth="180"/>
+            <TableColumn fx:id="colDate" text="Date" prefWidth="100"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="120"/>
+        </columns>
+    </TableView>
+</VBox>

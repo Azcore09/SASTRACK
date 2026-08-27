@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<ScrollPane fitToWidth="true" styleClass="page-scroll"
+            xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.sastrack.controller.DashboardController">
+    <VBox spacing="18">
+        <padding><Insets top="4" right="4" bottom="20" left="4"/></padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Label text="Dashboard" styleClass="page-title"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Label text="School Year" styleClass="field-label"/>
+            <ComboBox fx:id="schoolYearCombo" onAction="#refresh"/>
+        </HBox>
+
+        <HBox spacing="16">
+            <VBox fx:id="cardTotal" styleClass="stat-card" HBox.hgrow="ALWAYS" onMouseClicked="#goToAllViolations">
+                <Label text="TOTAL RECORDS" styleClass="stat-eyebrow"/>
+                <Label fx:id="statTotal" styleClass="stat-number"/>
+                <Label text="Violations + lost &amp; found" styleClass="stat-caption"/>
+            </VBox>
+            <VBox fx:id="cardItems" styleClass="stat-card" HBox.hgrow="ALWAYS" onMouseClicked="#goToAllItems">
+                <Label text="LOST &amp; FOUND" styleClass="stat-eyebrow"/>
+                <Label fx:id="statItems" styleClass="stat-number"/>
+                <Label text="Items logged this school year" styleClass="stat-caption"/>
+            </VBox>
+            <VBox fx:id="cardActive" styleClass="stat-card" HBox.hgrow="ALWAYS" onMouseClicked="#goToActiveViolations">
+                <Label text="ACTIVE VIOLATIONS" styleClass="stat-eyebrow"/>
+                <Label fx:id="statActive" styleClass="stat-number"/>
+                <Label text="Pending or under review" styleClass="stat-caption"/>
+            </VBox>
+            <VBox fx:id="cardResolved" styleClass="stat-card" HBox.hgrow="ALWAYS" onMouseClicked="#goToResolvedViolations">
+                <Label text="RESOLVED CASES" styleClass="stat-eyebrow"/>
+                <Label fx:id="statResolved" styleClass="stat-number"/>
+                <Label text="Closed violation records" styleClass="stat-caption"/>
+            </VBox>
+        </HBox>
+
+        <VBox styleClass="panel" spacing="10">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="VIOLATIONS BY OFFENSE TYPE" styleClass="panel-title"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <ToggleButton fx:id="viewMonthToggle" text="By month" styleClass="toggle-chip"/>
+                <ToggleButton fx:id="viewYearToggle" text="By year" styleClass="toggle-chip"/>
+            </HBox>
+            <BarChart fx:id="offenseChart" legendVisible="true" animated="true" prefHeight="320">
+                <xAxis><CategoryAxis fx:id="xAxis" label="Period"/></xAxis>
+                <yAxis><NumberAxis fx:id="yAxis" label="Count"/></yAxis>
+            </BarChart>
+        </VBox>
+    </VBox>
+</ScrollPane>

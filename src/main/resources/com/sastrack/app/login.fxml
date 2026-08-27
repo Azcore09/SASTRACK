@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.BoxBlur?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.sastrack.controller.LoginController"
+           styleClass="login-root">
+    <children>
+        <ImageView fitWidth="1600" fitHeight="900" preserveRatio="false" smooth="true" styleClass="login-bg-image">
+           <image>
+               <Image url="@/com/sastrack/images/sccskewl.webp"/>
+           </image>
+           <effect>
+               <BoxBlur iterations="2"/>
+           </effect>
+        </ImageView>
+
+        <VBox alignment="CENTER" styleClass="login-center-wrap">
+           <children>
+               <HBox alignment="CENTER" spacing="28" styleClass="login-shell">
+                   <children>
+                       <VBox alignment="CENTER_LEFT" spacing="18" maxWidth="320" minWidth="220" styleClass="login-brand-panel">
+                           <children>
+                               <ImageView fitWidth="96" preserveRatio="true" styleClass="login-brand-logo">
+                                   <image>
+                                       <Image url="@/com/sastrack/images/scc_logo.png"/>
+                                   </image>
+                               </ImageView>
+                               <Label text="SAS-TRACK" styleClass="login-brand"/>
+                               <Label text="Student Affairs Services" styleClass="login-brand-subtitle"/>
+                               <Label text="Track guidance concerns, incidents, and lost &amp; found records in one secure place."
+                                      styleClass="login-brand-copy" wrapText="true"/>
+                               <HBox spacing="10" alignment="CENTER_LEFT">
+                                   <children>
+                                       <Label text="●" styleClass="login-bullet"/>
+                                       <Label text="Incident monitoring" styleClass="login-feature"/>
+                                   </children>
+                               </HBox>
+                               <HBox spacing="10" alignment="CENTER_LEFT">
+                                   <children>
+                                       <Label text="●" styleClass="login-bullet"/>
+                                       <Label text="Case resolution" styleClass="login-feature"/>
+                                   </children>
+                               </HBox>
+                               <HBox spacing="10" alignment="CENTER_LEFT">
+                                   <children>
+                                       <Label text="●" styleClass="login-bullet"/>
+                                       <Label text="Student support logs" styleClass="login-feature"/>
+                                   </children>
+                               </HBox>
+                           </children>
+                       </VBox>
+
+                       <VBox fx:id="loginCard" alignment="CENTER" spacing="14" maxWidth="360" minWidth="320" styleClass="login-card">
+                           <padding>
+                               <Insets top="32" right="30" bottom="28" left="30"/>
+                           </padding>
+                           <children>
+                               <Label text="Welcome back" styleClass="login-title"/>
+                               <Label text="Sign in to continue" styleClass="login-subtitle"/>
+
+                               <VBox spacing="6">
+                                   <children>
+                                       <Label text="Username" styleClass="field-label"/>
+                                       <TextField fx:id="usernameField" promptText="e.g. j.delacruz"/>
+                                   </children>
+                               </VBox>
+
+                               <VBox spacing="6">
+                                   <children>
+                                       <Label text="Password" styleClass="field-label"/>
+                                       <PasswordField fx:id="passwordField" promptText="Password"/>
+                                   </children>
+                               </VBox>
+
+                               <Label fx:id="errorLabel" styleClass="field-error" managed="false" visible="false" wrapText="true"/>
+
+                               <Button text="Sign in" styleClass="btn-primary" maxWidth="Infinity" onAction="#handleLogin"/>
+
+                               <Label text="Demo accounts — Admin: j.delacruz / admin123 · Staff: m.fernandez / staff123"
+                                      styleClass="login-hint" wrapText="true" textAlignment="CENTER"/>
+                           </children>
+                       </VBox>
+                   </children>
+               </HBox>
+           </children>
+        </VBox>
+    </children>
+</StackPane>

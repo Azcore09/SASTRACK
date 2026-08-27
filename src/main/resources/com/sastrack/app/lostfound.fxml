@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="14" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.sastrack.controller.LostFoundController">
+    <padding><Insets top="4" right="4" bottom="20" left="4"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="Lost &amp; Found" styleClass="page-title"/>
+        <Pane HBox.hgrow="ALWAYS"/>
+        <Button text="+ Log found item" styleClass="btn-primary" onAction="#handleAdd"/>
+    </HBox>
+
+    <HBox spacing="8" alignment="CENTER_LEFT" styleClass="toolbar">
+        <TextField fx:id="searchField" promptText="Search by item name or claimant..." onKeyReleased="#refresh" HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="statusFilterBox" onAction="#refresh"/>
+        <ComboBox fx:id="schoolYearFilterBox" onAction="#refresh"/>
+    </HBox>
+
+    <TableView fx:id="table" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colName" text="Item" prefWidth="200"/>
+            <TableColumn fx:id="colCategory" text="Category" prefWidth="130"/>
+            <TableColumn fx:id="colDate" text="Date" prefWidth="100"/>
+            <TableColumn fx:id="colLocation" text="Location" prefWidth="120"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
+            <TableColumn fx:id="colClaimant" text="Claimant" prefWidth="130"/>
+            <TableColumn fx:id="colActions" text="" prefWidth="90"/>
+        </columns>
+    </TableView>
+</VBox>

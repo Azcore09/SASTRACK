@@ -1,0 +1,106 @@
+plugins {
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'com.sastrack'
+version = '1.0.0'
+
+def appName = 'SAS-TRACK'
+def isWindows = System.getProperty('os.name').toLowerCase().contains('win')
+def packageOutputDir = layout.buildDirectory.dir('jpackage').get().asFile
+
+def appJarFileName = "${project.name}-${project.version}.jar"
+def jpackageExecutable = new File(System.getProperty('java.home'), isWindows ? 'bin/jpackage.exe' : 'bin/jpackage')
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+javafx {
+    version = "21.0.2"
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.graphics']
+}
+
+application {
+    // Launcher avoids the "JavaFX runtime components missing" error
+    // that happens when the Application subclass is used as the main class
+    // from a runnable jar.
+    mainClass = 'com.sastrack.app.Launcher'
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation 'org.xerial:sqlite-jdbc:3.53.4.0'
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes(
+                'Main-Class': application.mainClass.get(),
+                'Implementation-Title': appName,
+                'Implementation-Version': project.version
+        )
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+tasks.register('jpackageAppImage', Exec) {
+    dependsOn tasks.named('jar')
+    onlyIf {
+        jpackageExecutable.exists()
+    }
+    doFirst {
+        if (!jpackageExecutable.exists()) {
+            throw new GradleException("jpackage is not available at ${jpackageExecutable}. Ensure the JDK includes jpackage.")
+        }
+        delete packageOutputDir
+    }
+
+    def args = [
+            jpackageExecutable.absolutePath,
+            '--type', 'app-image',
+            '--name', appName,
+            '--app-version', project.version,
+            '--input', layout.buildDirectory.dir('libs').get().asFile.absolutePath,
+            '--dest', packageOutputDir.absolutePath,
+            '--main-jar', appJarFileName,
+            '--main-class', application.mainClass.get(),
+            '--java-options', '-Dfile.encoding=UTF-8'
+    ]
+
+    commandLine args
+}
+
+tasks.register('jpackageInstaller', Exec) {
+    dependsOn tasks.named('jpackageAppImage')
+    onlyIf {
+        isWindows
+    }
+    def args = [
+            jpackageExecutable.absolutePath,
+            '--type', 'msi',
+            '--name', appName,
+            '--app-version', project.version,
+            '--input', layout.buildDirectory.dir('libs').get().asFile.absolutePath,
+            '--dest', packageOutputDir.absolutePath,
+            '--main-jar', appJarFileName,
+            '--main-class', application.mainClass.get(),
+            '--java-options', '-Dfile.encoding=UTF-8',
+            '--win-shortcut', '--win-menu'
+    ]
+    commandLine args
+}
+
+test {
+    useJUnitPlatform()
+}

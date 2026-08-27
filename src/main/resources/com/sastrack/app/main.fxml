@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.sastrack.controller.MainController" styleClass="root-pane">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <left>
+        <VBox fx:id="sidebar" styleClass="sidebar" prefWidth="220" minWidth="220">
+            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="brand-row">
+                <Label fx:id="brandLabel" text="SAS-TRACK" styleClass="brand-label"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button fx:id="collapseBtn" text="⟨" styleClass="collapse-btn" onAction="#toggleSidebar"/>
+            </HBox>
+
+            <Button fx:id="navDashboard" text="▦  Dashboard" styleClass="nav-link" maxWidth="Infinity" onAction="#showDashboard"/>
+
+            <VBox fx:id="lostFoundGroup">
+                <Button fx:id="navLostFoundHead" text="🎒  Lost &amp; Found" styleClass="nav-link" maxWidth="Infinity" onAction="#toggleLostFoundGroup"/>
+                <VBox fx:id="lostFoundSub" styleClass="subnav">
+                    <Button text="All items" styleClass="sub-link" maxWidth="Infinity" onAction="#showLostFoundAll"/>
+                    <Button text="Unclaimed items" styleClass="sub-link" maxWidth="Infinity" onAction="#showLostFoundUnclaimed"/>
+                    <Button text="Claimed items" styleClass="sub-link" maxWidth="Infinity" onAction="#showLostFoundClaimed"/>
+                    <Button text="Log found item" styleClass="sub-link" maxWidth="Infinity" onAction="#logFoundItem"/>
+                </VBox>
+            </VBox>
+
+            <VBox fx:id="violationsGroup">
+                <Button fx:id="navViolationsHead" text="⚖  Guidance Violations" styleClass="nav-link" maxWidth="Infinity" onAction="#toggleViolationsGroup"/>
+                <VBox fx:id="violationsSub" styleClass="subnav">
+                    <Button text="All records" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsAll"/>
+                    <Button text="Minor offenses" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsMinor"/>
+                    <Button text="Major offenses" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsMajor"/>
+                    <Button text="Serious offenses" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsSerious"/>
+                    <Button text="Add violation" styleClass="sub-link" maxWidth="Infinity" onAction="#addViolation"/>
+                </VBox>
+            </VBox>
+
+            <Pane VBox.vgrow="ALWAYS"/>
+
+            <Button fx:id="logoutBtn" text="⏻  Logout" styleClass="nav-link" maxWidth="Infinity" onAction="#handleLogout"/>
+        </VBox>
+    </left>
+
+    <!-- ===================== TOP BAR ===================== -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="topbar">
+            <padding><Insets top="12" right="20" bottom="12" left="20"/></padding>
+
+            <ComboBox fx:id="searchScopeBox" styleClass="search-scope"/>
+            <TextField fx:id="searchField" promptText="Search..." styleClass="search-field" HBox.hgrow="ALWAYS" onAction="#handleSearch"/>
+            <Button text="Search" styleClass="btn-outline" onAction="#handleSearch"/>
+
+            <Pane HBox.hgrow="ALWAYS"/>
+
+            <Label fx:id="userLabel" styleClass="user-label"/>
+        </HBox>
+    </top>
+
+    <!-- ===================== CONTENT ===================== -->
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area"/>
+    </center>
+</BorderPane>
