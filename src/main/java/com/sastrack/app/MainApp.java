@@ -23,6 +23,7 @@ public class MainApp extends Application {
     public static void showLogin() throws IOException {
         Parent root = FXMLLoader.load(MainApp.class.getResource("/com/sastrack/app/login.fxml"));
         Scene scene = new Scene(root, 980, 650);
+        scene.getStylesheets().add(MainApp.class.getResource("/com/sastrack/css/app.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(760);
         primaryStage.setMinHeight(520);
