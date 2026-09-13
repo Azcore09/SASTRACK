@@ -8,7 +8,7 @@
     <padding><Insets top="4" right="4" bottom="20" left="4"/></padding>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
-        <Label text="Guidance Violations" styleClass="page-title"/>
+        <Label text="SAS Violations" styleClass="page-title"/>
         <Pane HBox.hgrow="ALWAYS"/>
         <Button text="+ Add violation" styleClass="btn-primary" onAction="#handleAdd"/>
     </HBox>

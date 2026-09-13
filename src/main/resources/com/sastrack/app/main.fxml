@@ -28,7 +28,7 @@
             </VBox>
 
             <VBox fx:id="violationsGroup">
-                <Button fx:id="navViolationsHead" text="⚖  Guidance Violations" styleClass="nav-link" maxWidth="Infinity" onAction="#toggleViolationsGroup"/>
+                <Button fx:id="navViolationsHead" text="⚖  SAS Violations" styleClass="nav-link" maxWidth="Infinity" onAction="#toggleViolationsGroup"/>
                 <VBox fx:id="violationsSub" styleClass="subnav">
                     <Button text="All records" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsAll"/>
                     <Button text="Minor offenses" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsMinor"/>

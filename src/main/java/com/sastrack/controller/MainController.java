@@ -97,7 +97,7 @@ public class MainController {
             } else {
                 navDashboard.setText("▦  Dashboard");
                 navLostFoundHead.setText("🎒  Lost & Found");
-                navViolationsHead.setText("⚖  Guidance Violations");
+                navViolationsHead.setText("⚖  SAS Violations");
                 logoutBtn.setText("⏻  Logout");
             }
         });
