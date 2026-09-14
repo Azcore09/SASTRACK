@@ -8,16 +8,19 @@
 
 <StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.sastrack.controller.LoginController"
-           styleClass="login-root">
+           styleClass="login-root"
+           stylesheets="@/com/sastrack/css/app.css">
     <children>
-        <ImageView fitWidth="1600" fitHeight="900" preserveRatio="false" smooth="true" styleClass="login-bg-image">
+        <ImageView fitWidth="1600" fitHeight="900" preserveRatio="true" smooth="true" styleClass="login-bg-image">
            <image>
-               <Image url="@/com/sastrack/images/sccskewl.webp"/>
+               <Image url="@/com/sastrack/images/sccskewl.png"/>
            </image>
            <effect>
                <BoxBlur iterations="2"/>
            </effect>
         </ImageView>
+
+        <Pane mouseTransparent="true" styleClass="login-overlay"/>
 
         <VBox alignment="CENTER" styleClass="login-center-wrap">
            <children>
@@ -46,14 +49,14 @@
                                <VBox spacing="4" alignment="CENTER_LEFT" maxWidth="Infinity">
                                    <children>
                                        <Label text="Welcome Samuelians" styleClass="login-title"/>
-                                       <Label text="Sign in with your email address" styleClass="login-subtitle"/>
+                                       <Label text="Sign in with your name and password" styleClass="login-subtitle"/>
                                    </children>
                                </VBox>
 
                                <VBox spacing="10">
                                    <children>
-                                       <Label text="Email Address" styleClass="field-label"/>
-                                       <TextField fx:id="usernameField" promptText="Enter your email"/>
+                                       <Label text="Name" styleClass="field-label"/>
+                                       <TextField fx:id="usernameField" promptText="Enter your name"/>
                                    </children>
                                </VBox>
 

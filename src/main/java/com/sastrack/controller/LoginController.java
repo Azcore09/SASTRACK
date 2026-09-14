@@ -60,7 +60,7 @@ public class LoginController {
                 .findFirst();
 
         if (match.isEmpty()) {
-            showError("Invalid username or password.");
+            showError("Invalid name or password.");
             return;
         }
 

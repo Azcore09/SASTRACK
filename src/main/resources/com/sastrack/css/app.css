@@ -5,14 +5,18 @@
 
 /* ---------- Login ---------- */
 .login-root {
-    -fx-background-color: linear-gradient(to bottom, rgba(11, 24, 46, 0.30), rgba(11, 24, 46, 0.18));
+    -fx-background-color: linear-gradient(to bottom, rgba(11, 24, 46, 0.20), rgba(11, 24, 46, 0.10));
     -fx-padding: 0;
 }
 
+.login-overlay {
+    -fx-background-color: rgba(11, 24, 46, 0.12);
+}
+
 .login-bg-image {
-    -fx-opacity: 0.82;
-    -fx-scale-x: 1.12;
-    -fx-scale-y: 1.12;
+    -fx-opacity: 0.92;
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
     -fx-blend-mode: multiply;
     -fx-effect: dropshadow(gaussian, rgba(10, 32, 58, 0.25), 18, 0.18, 0, 0);
 }
@@ -75,14 +79,14 @@
 }
 
 .login-card {
-    -fx-background-color: rgba(255,255,255,0.74);
+    -fx-background-color: rgba(255,255,255,1.0);
     -fx-background-radius: 0 30 30 0;
-    -fx-border-color: rgba(255,255,255,0.28);
+    -fx-border-color: rgba(255,255,255,0.35);
     -fx-border-width: 1;
     -fx-padding: 42 38 34 38;
     -fx-spacing: 18;
     -fx-alignment: center;
-    -fx-effect: dropshadow(gaussian, rgba(5, 30, 75, 0.14), 22, 0.2, 0, 12);
+    -fx-effect: dropshadow(gaussian, rgba(5, 30, 75, 0.18), 22, 0.2, 0, 12);
 }
 
 .login-title {
@@ -177,6 +181,48 @@
 .panel-title { -fx-font-size: 12.5px; -fx-font-weight: bold; -fx-text-fill: #0e1b3d; }
 .toggle-chip { -fx-background-color: #f5f6fa; -fx-border-color: #e7e9f0; -fx-background-radius: 20; -fx-border-radius: 20; -fx-padding: 6 12; -fx-font-size: 11px; }
 .toggle-chip:selected { -fx-background-color: #2f6fed; -fx-text-fill: white; }
+
+.chart {
+    -fx-padding: 8 8 0 8;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: rgba(14, 27, 61, 0.15);
+    -fx-stroke-width: 1;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: rgba(14, 27, 61, 0.12);
+    -fx-stroke-width: 1;
+}
+
+.axis {
+    -fx-tick-label-fill: #475a73;
+    -fx-font-size: 10px;
+}
+
+.axis .axis-line {
+    -fx-stroke: rgba(14, 27, 61, 0.25);
+    -fx-stroke-width: 1;
+}
+
+.default-color0.chart-bar { -fx-bar-fill: #2f6fed; }
+.default-color1.chart-bar { -fx-bar-fill: #7aa8ff; }
+.default-color2.chart-bar { -fx-bar-fill: #0e1b3d; }
+.default-color3.chart-bar { -fx-bar-fill: #3ca76e; }
+
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-padding: 8 0 0 0;
+}
+
+.chart-legend-item-symbol {
+    -fx-background-radius: 4;
+}
 
 .offense-severity {
     -fx-background-color: #f5f6fa;

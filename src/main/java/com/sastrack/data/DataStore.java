@@ -4,65 +4,264 @@ import com.sastrack.model.LostItem;
 import com.sastrack.model.User;
 import com.sastrack.model.Violation;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 
-/**
- * In-memory sample data. This class is deliberately isolated (no JavaFX
- * controller code touches raw lists) so it can be swapped for a real
- * Oracle-backed repository layer later without changing the UI code.
- */
 public final class DataStore {
 
-    public static final ObservableList<User> USERS = FXCollections.observableArrayList(
-            new User("j.delacruz", "admin123", "SAS Head"),
-            new User("m.fernandez", "staff123", "SAS Staff")
-    );
+    private static final Path DB_PATH = Paths.get(System.getProperty("user.home"), ".sastrack", "sastrack.db");
 
-    public static final ObservableList<Violation> VIOLATIONS = FXCollections.observableArrayList(
-            new Violation(1, "Miguel Santos", "24-00050", "Grade 10 - Rizal", "Minor Offense",
-                    LocalDate.of(2026, 8, 10), "Pending", "2026-2027", "J. Dela Cruz", "Improper uniform."),
-            new Violation(2, "Andrea Reyes", "23-00981", "Grade 12 - STEM B", "Minor Offense",
-                    LocalDate.of(2026, 8, 11), "Resolved", "2026-2027", "M. Fernandez", "Late for first period, third instance."),
-            new Violation(3, "Bea Villanueva", "24-00202", "Grade 11 - HUMSS A", "Serious Offense",
-                    LocalDate.of(2026, 8, 12), "Pending", "2026-2027", "M. Fernandez", "Argued with subject teacher during class."),
-            new Violation(4, "Carlos Ramirez", "25-00077", "Grade 9 - Bonifacio", "Serious Offense",
-                    LocalDate.of(2026, 8, 14), "Under Review", "2026-2027", "J. Dela Cruz", "Involved in a physical altercation."),
-            new Violation(5, "Nicole Torres", "24-00156", "Grade 12 - STEM C", "Minor Offense",
-                    LocalDate.of(2026, 8, 15), "Pending", "2026-2027", "M. Fernandez", "Third tardy incident this month."),
-            new Violation(6, "Patrick Tagle", "24-00301", "Grade 10 - Luna", "Major Offense",
-                    LocalDate.of(2026, 8, 16), "Resolved", "2026-2027", "J. Dela Cruz", "Vandalism on classroom armchair."),
-            new Violation(7, "Miguel Santos", "24-00050", "Grade 10 - Rizal", "Major Offense",
-                    LocalDate.of(2025, 11, 3), "Resolved", "2025-2026", "J. Dela Cruz", "Cheating during a quarterly exam."),
-            new Violation(8, "Andrea Reyes", "23-00981", "Grade 12 - STEM B", "Minor Offense",
-                    LocalDate.of(2025, 9, 20), "Resolved", "2025-2026", "M. Fernandez", "Unauthorized use of phone in class."),
-            new Violation(9, "Diego Ocampo", "23-00450", "Grade 11 - HUMSS B", "Serious Offense",
-                    LocalDate.of(2025, 10, 14), "Resolved", "2025-2026", "J. Dela Cruz", "Bullying complaint from a classmate.")
-    );
+    public static final ObservableList<User> USERS = FXCollections.observableArrayList();
+    public static final ObservableList<Violation> VIOLATIONS = FXCollections.observableArrayList();
+    public static final ObservableList<LostItem> ITEMS = FXCollections.observableArrayList();
 
-    public static final ObservableList<LostItem> ITEMS = FXCollections.observableArrayList(
-            new LostItem(1, "Black Jansport backpack", "Bag", LocalDate.of(2026, 8, 5), "Canteen",
-                    "Claimed", "Miguel Santos", "2026-2027"),
-            new LostItem(2, "Casio scientific calculator", "Stationery", LocalDate.of(2026, 8, 7), "Room 204",
-                    "Unclaimed", "", "2026-2027"),
-            new LostItem(3, "Blue school ID lanyard", "ID / Documents", LocalDate.of(2026, 8, 9), "Gymnasium",
-                    "Unclaimed", "", "2026-2027"),
-            new LostItem(4, "Wired earphones (white)", "Electronics", LocalDate.of(2026, 8, 11), "Library",
-                    "Claimed", "Andrea Reyes", "2026-2027"),
-            new LostItem(5, "Grey school vest, size M", "Clothing", LocalDate.of(2026, 8, 13), "Covered court",
-                    "Unclaimed", "", "2026-2027"),
-            new LostItem(6, "Red umbrella", "Other", LocalDate.of(2025, 9, 2), "Main gate",
-                    "Claimed", "Diego Ocampo", "2025-2026"),
-            new LostItem(7, "Silver wristwatch", "Accessories", LocalDate.of(2025, 12, 1), "Chapel",
-                    "Unclaimed", "", "2025-2026")
-    );
+    static {
+        initializeDatabase();
+        loadUsers();
+        loadViolations();
+        loadItems();
+        attachPersistence();
+    }
 
-    private static int nextViolationId = 10;
-    private static int nextItemId = 8;
+    private static Connection connect() throws SQLException {
+        return DriverManager.getConnection("jdbc:sqlite:" + DB_PATH.toAbsolutePath());
+    }
 
-    public static int nextViolationId() { return nextViolationId++; }
-    public static int nextItemId() { return nextItemId++; }
+    private static void initializeDatabase() {
+        try {
+            Files.createDirectories(DB_PATH.getParent());
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to create local data directory for SAS-TRACK.", e);
+        }
+
+        try (Connection connection = connect(); Statement statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT NOT NULL, role TEXT NOT NULL)");
+            statement.execute("CREATE TABLE IF NOT EXISTS violations (id INTEGER PRIMARY KEY, student_name TEXT NOT NULL, student_id TEXT NOT NULL, section TEXT NOT NULL, type TEXT NOT NULL, date TEXT NOT NULL, status TEXT NOT NULL, school_year TEXT NOT NULL, reported_by TEXT NOT NULL, description TEXT NOT NULL)");
+            statement.execute("CREATE TABLE IF NOT EXISTS lost_items (id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, date TEXT NOT NULL, location TEXT NOT NULL, status TEXT NOT NULL, claimant TEXT NOT NULL, school_year TEXT NOT NULL)");
+
+            statement.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('j.delacruz', 'admin123', 'SAS Head')");
+            statement.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('m.fernandez', 'staff123', 'SAS Staff')");
+
+            statement.execute("DELETE FROM violations");
+            statement.execute("DELETE FROM lost_items");
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to initialize the SQLite database for SAS-TRACK.", e);
+        }
+    }
+
+    private static void loadUsers() {
+        USERS.clear();
+        try (Connection connection = connect(); Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT username, password, role FROM users ORDER BY username ASC")) {
+            while (rs.next()) {
+                USERS.add(new User(rs.getString("username"), rs.getString("password"), rs.getString("role")));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to load user data from SQLite.", e);
+        }
+    }
+
+    private static void loadViolations() {
+        VIOLATIONS.clear();
+        try (Connection connection = connect(); Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT id, student_name, student_id, section, type, date, status, school_year, reported_by, description FROM violations ORDER BY id ASC")) {
+            while (rs.next()) {
+                Violation violation = new Violation(
+                        rs.getInt("id"),
+                        rs.getString("student_name"),
+                        rs.getString("student_id"),
+                        rs.getString("section"),
+                        rs.getString("type"),
+                        LocalDate.parse(rs.getString("date")),
+                        rs.getString("status"),
+                        rs.getString("school_year"),
+                        rs.getString("reported_by"),
+                        rs.getString("description")
+                );
+                attachViolationListeners(violation);
+                VIOLATIONS.add(violation);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to load violation data from SQLite.", e);
+        }
+    }
+
+    private static void loadItems() {
+        ITEMS.clear();
+        try (Connection connection = connect(); Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT id, name, category, date, location, status, claimant, school_year FROM lost_items ORDER BY id ASC")) {
+            while (rs.next()) {
+                LostItem item = new LostItem(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("category"),
+                        LocalDate.parse(rs.getString("date")),
+                        rs.getString("location"),
+                        rs.getString("status"),
+                        rs.getString("claimant"),
+                        rs.getString("school_year")
+                );
+                attachLostItemListeners(item);
+                ITEMS.add(item);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to load lost item data from SQLite.", e);
+        }
+    }
+
+    private static void attachPersistence() {
+        USERS.addListener((ListChangeListener<User>) change -> {
+            while (change.next()) {
+                if (change.wasAdded() || change.wasRemoved()) {
+                    persistUsers();
+                }
+            }
+        });
+
+        VIOLATIONS.addListener((ListChangeListener<Violation>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    for (Violation violation : change.getAddedSubList()) {
+                        attachViolationListeners(violation);
+                    }
+                }
+                if (change.wasAdded() || change.wasRemoved()) {
+                    persistViolations();
+                }
+            }
+        });
+
+        ITEMS.addListener((ListChangeListener<LostItem>) change -> {
+            while (change.next()) {
+                if (change.wasAdded()) {
+                    for (LostItem item : change.getAddedSubList()) {
+                        attachLostItemListeners(item);
+                    }
+                }
+                if (change.wasAdded() || change.wasRemoved()) {
+                    persistItems();
+                }
+            }
+        });
+    }
+
+    private static void attachViolationListeners(Violation violation) {
+        violation.idProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.studentNameProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.studentIdProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.sectionProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.typeProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.dateProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.statusProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.schoolYearProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.reportedByProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.descriptionProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+    }
+
+    private static void attachLostItemListeners(LostItem item) {
+        item.idProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.nameProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.categoryProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.dateProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.locationProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.statusProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.claimantProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.schoolYearProperty().addListener((obs, oldValue, newValue) -> persistItems());
+    }
+
+    private static void persistUsers() {
+        try (Connection connection = connect(); PreparedStatement delete = connection.prepareStatement("DELETE FROM users");
+             PreparedStatement insert = connection.prepareStatement("INSERT INTO users (username, password, role) VALUES (?, ?, ?)")) {
+            delete.executeUpdate();
+            for (User user : USERS) {
+                insert.setString(1, user.getUsername());
+                insert.setString(2, user.getPassword());
+                insert.setString(3, user.getRole());
+                insert.addBatch();
+            }
+            insert.executeBatch();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to persist users to SQLite.", e);
+        }
+    }
+
+    private static void persistViolations() {
+        try (Connection connection = connect(); PreparedStatement delete = connection.prepareStatement("DELETE FROM violations");
+             PreparedStatement insert = connection.prepareStatement(
+                     "INSERT INTO violations (id, student_name, student_id, section, type, date, status, school_year, reported_by, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            delete.executeUpdate();
+            for (Violation violation : VIOLATIONS) {
+                insert.setInt(1, violation.getId());
+                insert.setString(2, violation.getStudentName());
+                insert.setString(3, violation.getStudentId());
+                insert.setString(4, violation.getSection());
+                insert.setString(5, violation.getType());
+                insert.setString(6, violation.getDate().toString());
+                insert.setString(7, violation.getStatus());
+                insert.setString(8, violation.getSchoolYear());
+                insert.setString(9, violation.getReportedBy());
+                insert.setString(10, violation.getDescription());
+                insert.addBatch();
+            }
+            insert.executeBatch();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to persist violation data to SQLite.", e);
+        }
+    }
+
+    private static void persistItems() {
+        try (Connection connection = connect(); PreparedStatement delete = connection.prepareStatement("DELETE FROM lost_items");
+             PreparedStatement insert = connection.prepareStatement(
+                     "INSERT INTO lost_items (id, name, category, date, location, status, claimant, school_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            delete.executeUpdate();
+            for (LostItem item : ITEMS) {
+                insert.setInt(1, item.getId());
+                insert.setString(2, item.getName());
+                insert.setString(3, item.getCategory());
+                insert.setString(4, item.getDate().toString());
+                insert.setString(5, item.getLocation());
+                insert.setString(6, item.getStatus());
+                insert.setString(7, item.getClaimant());
+                insert.setString(8, item.getSchoolYear());
+                insert.addBatch();
+            }
+            insert.executeBatch();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to persist lost item data to SQLite.", e);
+        }
+    }
+
+    public static int nextViolationId() {
+        return nextId("violations");
+    }
+
+    public static int nextItemId() {
+        return nextId("lost_items");
+    }
+
+    private static int nextId(String tableName) {
+        try (Connection connection = connect(); Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM " + tableName)) {
+            if (rs.next()) {
+                return rs.getInt("next_id");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to determine the next ID for SQLite table " + tableName + ".", e);
+        }
+        return 1;
+    }
 
     private DataStore() {}
 }
