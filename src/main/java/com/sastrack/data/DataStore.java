@@ -21,15 +21,17 @@ import java.time.LocalDate;
 
 public final class DataStore {
 
-    private static final Path DB_PATH = Paths.get(System.getProperty("user.home"), ".sastrack", "sastrack.db");
+    private static final Path DB_PATH = Paths.get(System.getProperty("user.dir"), "data", "sastrack.db");
 
-    public static final ObservableList<User> USERS = FXCollections.observableArrayList();
+    public static final ObservableList<User> USERS = FXCollections.observableArrayList(
+            new User("j.delacruz", "admin123", "SAS Head"),
+            new User("m.fernandez", "staff123", "SAS Staff")
+    );
     public static final ObservableList<Violation> VIOLATIONS = FXCollections.observableArrayList();
     public static final ObservableList<LostItem> ITEMS = FXCollections.observableArrayList();
 
     static {
         initializeDatabase();
-        loadUsers();
         loadViolations();
         loadItems();
         attachPersistence();
@@ -47,29 +49,13 @@ public final class DataStore {
         }
 
         try (Connection connection = connect(); Statement statement = connection.createStatement()) {
-            statement.execute("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT NOT NULL, role TEXT NOT NULL)");
             statement.execute("CREATE TABLE IF NOT EXISTS violations (id INTEGER PRIMARY KEY, student_name TEXT NOT NULL, student_id TEXT NOT NULL, section TEXT NOT NULL, type TEXT NOT NULL, date TEXT NOT NULL, status TEXT NOT NULL, school_year TEXT NOT NULL, reported_by TEXT NOT NULL, description TEXT NOT NULL)");
             statement.execute("CREATE TABLE IF NOT EXISTS lost_items (id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, date TEXT NOT NULL, location TEXT NOT NULL, status TEXT NOT NULL, claimant TEXT NOT NULL, school_year TEXT NOT NULL)");
-
-            statement.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('j.delacruz', 'admin123', 'SAS Head')");
-            statement.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('m.fernandez', 'staff123', 'SAS Staff')");
 
             statement.execute("DELETE FROM violations");
             statement.execute("DELETE FROM lost_items");
         } catch (SQLException e) {
             throw new IllegalStateException("Unable to initialize the SQLite database for SAS-TRACK.", e);
-        }
-    }
-
-    private static void loadUsers() {
-        USERS.clear();
-        try (Connection connection = connect(); Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery("SELECT username, password, role FROM users ORDER BY username ASC")) {
-            while (rs.next()) {
-                USERS.add(new User(rs.getString("username"), rs.getString("password"), rs.getString("role")));
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Unable to load user data from SQLite.", e);
         }
     }
 
@@ -122,14 +108,6 @@ public final class DataStore {
     }
 
     private static void attachPersistence() {
-        USERS.addListener((ListChangeListener<User>) change -> {
-            while (change.next()) {
-                if (change.wasAdded() || change.wasRemoved()) {
-                    persistUsers();
-                }
-            }
-        });
-
         VIOLATIONS.addListener((ListChangeListener<Violation>) change -> {
             while (change.next()) {
                 if (change.wasAdded()) {
@@ -179,22 +157,6 @@ public final class DataStore {
         item.statusProperty().addListener((obs, oldValue, newValue) -> persistItems());
         item.claimantProperty().addListener((obs, oldValue, newValue) -> persistItems());
         item.schoolYearProperty().addListener((obs, oldValue, newValue) -> persistItems());
-    }
-
-    private static void persistUsers() {
-        try (Connection connection = connect(); PreparedStatement delete = connection.prepareStatement("DELETE FROM users");
-             PreparedStatement insert = connection.prepareStatement("INSERT INTO users (username, password, role) VALUES (?, ?, ?)")) {
-            delete.executeUpdate();
-            for (User user : USERS) {
-                insert.setString(1, user.getUsername());
-                insert.setString(2, user.getPassword());
-                insert.setString(3, user.getRole());
-                insert.addBatch();
-            }
-            insert.executeBatch();
-        } catch (SQLException e) {
-            throw new IllegalStateException("Unable to persist users to SQLite.", e);
-        }
     }
 
     private static void persistViolations() {
