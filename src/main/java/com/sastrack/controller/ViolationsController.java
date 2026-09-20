@@ -63,7 +63,7 @@ public class ViolationsController implements MainController.MainAware {
         colBy.setCellValueFactory(new PropertyValueFactory<>("reportedBy"));
         addActionsColumn();
 
-        sectionFilterBox.setItems(FXCollections.observableArrayList("All sections"));
+        sectionFilterBox.setItems(FXCollections.observableArrayList("N/A"));
         sectionFilterBox.getItems().addAll(ViolationCatalog.sections());
         sectionFilterBox.getSelectionModel().selectFirst();
 
@@ -81,7 +81,7 @@ public class ViolationsController implements MainController.MainAware {
 
     public void applySectionFilter(String section) {
         sectionFilterBox.getSelectionModel().select(section == null || section.equals("All")
-                ? "All sections" : section);
+                ? "N/A" : section);
         refresh();
     }
 
@@ -99,7 +99,7 @@ public class ViolationsController implements MainController.MainAware {
 
         var filtered = DataStore.VIOLATIONS.filtered(v ->
                 (q.isEmpty() || v.getStudentName().toLowerCase().contains(q) || v.getStudentId().toLowerCase().contains(q)) &&
-                ("All sections".equals(section) || v.getSection().equals(section)) &&
+                ("N/A".equals(section) || v.getSection().equals(section)) &&
                 ("All statuses".equals(status) || v.getStatus().equals(status)) &&
                 (year == null || "All school years".equals(year) || v.getSchoolYear().equals(year)) &&
                 (statusGroupFilter == null
@@ -149,7 +149,8 @@ public class ViolationsController implements MainController.MainAware {
 
         TextField nameField = new TextField(existing == null ? "" : existing.getStudentName());
         TextField sidField = new TextField(existing == null ? "" : existing.getStudentId());
-        ComboBox<String> sectionBox = new ComboBox<>(FXCollections.observableArrayList(ViolationCatalog.sections()));
+        ComboBox<String> sectionBox = new ComboBox<>(FXCollections.observableArrayList("N/A"));
+        sectionBox.getItems().addAll(ViolationCatalog.sections());
         sectionBox.setMaxWidth(Double.MAX_VALUE);
         if (existing != null && ViolationCatalog.sections().contains(existing.getSection())) {
             sectionBox.setValue(existing.getSection());
@@ -158,23 +159,46 @@ public class ViolationsController implements MainController.MainAware {
         }
         ComboBox<String> violationBox = new ComboBox<>();
         violationBox.setMaxWidth(Double.MAX_VALUE);
+        violationBox.setItems(FXCollections.observableArrayList(ViolationCatalog.allViolations()));
+        if (existing != null && ViolationCatalog.allViolations().contains(existing.getType())) {
+            violationBox.setValue(existing.getType());
+        }
+        final boolean[] updatingSelection = {false};
         Runnable updateViolations = () -> {
             String selectedSection = sectionBox.getValue();
-            violationBox.setItems(FXCollections.observableArrayList(ViolationCatalog.violationsFor(selectedSection)));
-            if (existing != null && selectedSection.equals(existing.getSection())
-                    && ViolationCatalog.violationsFor(selectedSection).contains(existing.getType())) {
+            boolean sectionSelected = selectedSection != null && !"N/A".equals(selectedSection);
+            violationBox.setItems(FXCollections.observableArrayList(
+                    sectionSelected ? ViolationCatalog.violationsFor(selectedSection)
+                            : ViolationCatalog.allViolations()));
+            if (existing != null && selectedSection != null && (selectedSection.equals(existing.getSection())
+                    || (!sectionSelected && ViolationCatalog.allViolations().contains(existing.getType())))
+                    && ViolationCatalog.allViolations().contains(existing.getType())) {
                 violationBox.setValue(existing.getType());
-            } else {
-                violationBox.getSelectionModel().selectFirst();
+            } else if (violationBox.getValue() == null
+                    || !violationBox.getItems().contains(violationBox.getValue())) {
+                violationBox.getSelectionModel().clearSelection();
             }
         };
         sectionBox.setOnAction(e -> updateViolations.run());
+        violationBox.setOnAction(e -> {
+            if (updatingSelection[0] || violationBox.getValue() == null) return;
+            String selectedSection = sectionBox.getValue();
+            if ("N/A".equals(selectedSection)) {
+                String matchingSection = ViolationCatalog.sectionFor(violationBox.getValue());
+                if (matchingSection != null) {
+                    updatingSelection[0] = true;
+                    sectionBox.setValue(matchingSection);
+                    updatingSelection[0] = false;
+                }
+            }
+        });
         updateViolations.run();
 
         DatePicker datePicker = new DatePicker(existing == null ? LocalDate.now() : existing.getDate());
         DatePicker completedDatePicker = new DatePicker(existing == null ? null : existing.getCompletedDate());
         ComboBox<String> offenseBox = new ComboBox<>(FXCollections.observableArrayList(
                 "N/A", "1st Offense", "2nd Offense", "3rd Offense", "4th Offense", "5th Offense"));
+        offenseBox.setEditable(false);
         offenseBox.setValue(existing == null ? "N/A" : existing.getOffense());
         ComboBox<String> actionBox = new ComboBox<>(FXCollections.observableArrayList(
                 "N/A", "Official Warning", "Dismissal"));
@@ -218,7 +242,7 @@ public class ViolationsController implements MainController.MainAware {
             }
             String selectedSection = sectionBox.getValue();
             String selectedViolation = violationBox.getValue();
-            if (selectedSection == null || selectedViolation == null) {
+            if (selectedSection == null || "N/A".equals(selectedSection) || selectedViolation == null) {
                 new Alert(Alert.AlertType.WARNING, "Select a section and violation.").showAndWait();
                 return;
             }

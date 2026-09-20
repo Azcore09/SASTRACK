@@ -76,6 +76,20 @@ public final class ViolationCatalog {
         return SECTIONS.getOrDefault(section, List.of());
     }
 
+    public static List<String> allViolations() {
+        return SECTIONS.values().stream()
+                .flatMap(List::stream)
+                .toList();
+    }
+
+    public static String sectionFor(String violation) {
+        return SECTIONS.entrySet().stream()
+                .filter(entry -> entry.getValue().contains(violation))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+    }
+
     private ViolationCatalog() {
     }
 }
