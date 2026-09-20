@@ -25,6 +25,9 @@
         <VBox alignment="CENTER" styleClass="login-center-wrap">
            <children>
                <HBox alignment="CENTER" spacing="0" styleClass="login-shell">
+                   <VBox.margin>
+                       <Insets top="40" right="0" bottom="40" left="0"/>
+                   </VBox.margin>
                    <children>
                        <VBox alignment="CENTER_LEFT" spacing="18" maxWidth="500" minWidth="290" styleClass="login-brand-panel">
                            <children>
@@ -48,7 +51,7 @@
                            <children>
                                <VBox spacing="4" alignment="CENTER_LEFT" maxWidth="Infinity">
                                    <children>
-                                       <Label text="Welcome Samuelians" styleClass="login-title"/>
+                                       <Label text="Welcome to SAS-Track" styleClass="login-title"/>
                                        <Label text="Sign in with your name and password" styleClass="login-subtitle"/>
                                    </children>
                                </VBox>
@@ -71,7 +74,7 @@
 
                                <Button text="SIGN IN" styleClass="btn-primary" maxWidth="Infinity" onAction="#handleLogin"/>
 
-                               <Label text="Demo accounts — Admin: j.delacruz / admin123 · Staff: m.fernandez / staff123"
+                               <Label text="Demo accounts — Admin: admin / admin123 · Staff: staff / staff123"
                                       styleClass="login-hint" wrapText="true" textAlignment="CENTER"/>
                            </children>
                        </VBox>

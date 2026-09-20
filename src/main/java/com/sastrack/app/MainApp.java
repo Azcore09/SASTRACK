@@ -16,6 +16,9 @@ public class MainApp extends Application {
     public void start(Stage stage) throws IOException {
         primaryStage = stage;
         stage.setTitle("SAS-TRACK");
+        // Make the application window fill the screen on launch
+        stage.setMaximized(true);
+        // For true fullscreen (hides OS chrome) use: stage.setFullScreen(true);
         showLogin();
         stage.show();
     }
@@ -35,6 +38,13 @@ public class MainApp extends Application {
         scene.getStylesheets().add(MainApp.class.getResource("/com/sastrack/css/app.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setMaximized(true);
+    }
+
+    @Override
+    public void stop() throws Exception {
+        // Ensure in-memory data is persisted when the application closes.
+        com.sastrack.data.DataStore.saveAll();
+        super.stop();
     }
 
     public static void main(String[] args) {

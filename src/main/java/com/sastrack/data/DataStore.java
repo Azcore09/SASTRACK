@@ -24,8 +24,8 @@ public final class DataStore {
     private static final Path DB_PATH = Paths.get(System.getProperty("user.dir"), "data", "sastrack.db");
 
     public static final ObservableList<User> USERS = FXCollections.observableArrayList(
-            new User("j.delacruz", "admin123", "SAS Head"),
-            new User("m.fernandez", "staff123", "SAS Staff")
+            new User("admin", "admin123", "SAS Head"),
+            new User("staff", "staff123", "SAS Staff")
     );
     public static final ObservableList<Violation> VIOLATIONS = FXCollections.observableArrayList();
     public static final ObservableList<LostItem> ITEMS = FXCollections.observableArrayList();
@@ -51,12 +51,16 @@ public final class DataStore {
         try (Connection connection = connect(); Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE IF NOT EXISTS violations (id INTEGER PRIMARY KEY, student_name TEXT NOT NULL, student_id TEXT NOT NULL, section TEXT NOT NULL, type TEXT NOT NULL, date TEXT NOT NULL, status TEXT NOT NULL, school_year TEXT NOT NULL, reported_by TEXT NOT NULL, description TEXT NOT NULL)");
             statement.execute("CREATE TABLE IF NOT EXISTS lost_items (id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, date TEXT NOT NULL, location TEXT NOT NULL, status TEXT NOT NULL, claimant TEXT NOT NULL, school_year TEXT NOT NULL)");
-
-            statement.execute("DELETE FROM violations");
-            statement.execute("DELETE FROM lost_items");
         } catch (SQLException e) {
             throw new IllegalStateException("Unable to initialize the SQLite database for SAS-TRACK.", e);
         }
+    }
+
+    // Explicitly persist current in-memory lists to the database. Called on application shutdown.
+    public static void saveAll() {
+        // Persist current state; individual persist methods are private but callable from within the class.
+        persistViolations();
+        persistItems();
     }
 
     private static void loadViolations() {
