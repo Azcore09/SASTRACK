@@ -15,7 +15,7 @@
 
     <HBox spacing="8" alignment="CENTER_LEFT" styleClass="toolbar">
         <TextField fx:id="searchField" promptText="Search by student name or ID..." onKeyReleased="#refresh" HBox.hgrow="ALWAYS"/>
-        <ComboBox fx:id="typeFilterBox" onAction="#refresh"/>
+        <ComboBox fx:id="sectionFilterBox" onAction="#refresh" prefWidth="300"/>
         <ComboBox fx:id="statusFilterBox" onAction="#refresh"/>
         <ComboBox fx:id="schoolYearFilterBox" onAction="#refresh"/>
     </HBox>
@@ -24,8 +24,13 @@
         <columns>
             <TableColumn fx:id="colName" text="Student" prefWidth="160"/>
             <TableColumn fx:id="colSection" text="Section" prefWidth="150"/>
-            <TableColumn fx:id="colType" text="Type" prefWidth="120"/>
-            <TableColumn fx:id="colDate" text="Date" prefWidth="100"/>
+            <TableColumn fx:id="colType" text="Violation" prefWidth="260"/>
+            <TableColumn fx:id="colOffense" text="Offense" prefWidth="105"/>
+            <TableColumn fx:id="colActionTaken" text="Action Taken" prefWidth="125"/>
+            <TableColumn fx:id="colSuspensionDays" text="Suspension Days" prefWidth="110"/>
+            <TableColumn fx:id="colSanction" text="Sanction" prefWidth="180"/>
+            <TableColumn fx:id="colDate" text="Date Reported" prefWidth="105"/>
+            <TableColumn fx:id="colCompletedDate" text="Date Completed" prefWidth="105"/>
             <TableColumn fx:id="colStatus" text="Status" prefWidth="110"/>
             <TableColumn fx:id="colYear" text="School Year" prefWidth="100"/>
             <TableColumn fx:id="colBy" text="Reported By" prefWidth="110"/>

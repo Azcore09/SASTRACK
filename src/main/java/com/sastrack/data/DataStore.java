@@ -49,11 +49,26 @@ public final class DataStore {
         }
 
         try (Connection connection = connect(); Statement statement = connection.createStatement()) {
-            statement.execute("CREATE TABLE IF NOT EXISTS violations (id INTEGER PRIMARY KEY, student_name TEXT NOT NULL, student_id TEXT NOT NULL, section TEXT NOT NULL, type TEXT NOT NULL, date TEXT NOT NULL, status TEXT NOT NULL, school_year TEXT NOT NULL, reported_by TEXT NOT NULL, description TEXT NOT NULL)");
+            statement.execute("CREATE TABLE IF NOT EXISTS violations (id INTEGER PRIMARY KEY, student_name TEXT NOT NULL, student_id TEXT NOT NULL, section TEXT NOT NULL, type TEXT NOT NULL, offense TEXT NOT NULL DEFAULT 'N/A', action_taken TEXT NOT NULL DEFAULT 'N/A', suspension_days INTEGER NOT NULL DEFAULT 0, sanction TEXT NOT NULL DEFAULT 'N/A', date TEXT NOT NULL, completed_date TEXT, status TEXT NOT NULL, school_year TEXT NOT NULL, reported_by TEXT NOT NULL, description TEXT NOT NULL)");
+            addViolationColumn(statement, "offense", "TEXT NOT NULL DEFAULT 'N/A'");
+            addViolationColumn(statement, "action_taken", "TEXT NOT NULL DEFAULT 'N/A'");
+            addViolationColumn(statement, "suspension_days", "INTEGER NOT NULL DEFAULT 0");
+            addViolationColumn(statement, "sanction", "TEXT NOT NULL DEFAULT 'N/A'");
+            addViolationColumn(statement, "completed_date", "TEXT");
             statement.execute("CREATE TABLE IF NOT EXISTS lost_items (id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, date TEXT NOT NULL, location TEXT NOT NULL, status TEXT NOT NULL, claimant TEXT NOT NULL, school_year TEXT NOT NULL)");
         } catch (SQLException e) {
             throw new IllegalStateException("Unable to initialize the SQLite database for SAS-TRACK.", e);
         }
+
+    }
+
+    private static void addViolationColumn(Statement statement, String column, String definition) throws SQLException {
+        try (ResultSet columns = statement.executeQuery("PRAGMA table_info(violations)")) {
+            while (columns.next()) {
+                if (column.equals(columns.getString("name"))) return;
+            }
+        }
+        statement.execute("ALTER TABLE violations ADD COLUMN " + column + " " + definition);
     }
 
     // Explicitly persist current in-memory lists to the database. Called on application shutdown.
@@ -66,7 +81,7 @@ public final class DataStore {
     private static void loadViolations() {
         VIOLATIONS.clear();
         try (Connection connection = connect(); Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery("SELECT id, student_name, student_id, section, type, date, status, school_year, reported_by, description FROM violations ORDER BY id ASC")) {
+             ResultSet rs = statement.executeQuery("SELECT id, student_name, student_id, section, type, offense, action_taken, suspension_days, sanction, date, completed_date, status, school_year, reported_by, description FROM violations ORDER BY id ASC")) {
             while (rs.next()) {
                 Violation violation = new Violation(
                         rs.getInt("id"),
@@ -74,7 +89,12 @@ public final class DataStore {
                         rs.getString("student_id"),
                         rs.getString("section"),
                         rs.getString("type"),
+                        rs.getString("offense"),
+                        rs.getString("action_taken"),
+                        rs.getInt("suspension_days"),
+                        rs.getString("sanction"),
                         LocalDate.parse(rs.getString("date")),
+                        rs.getString("completed_date") == null ? null : LocalDate.parse(rs.getString("completed_date")),
                         rs.getString("status"),
                         rs.getString("school_year"),
                         rs.getString("reported_by"),
@@ -145,7 +165,12 @@ public final class DataStore {
         violation.studentIdProperty().addListener((obs, oldValue, newValue) -> persistViolations());
         violation.sectionProperty().addListener((obs, oldValue, newValue) -> persistViolations());
         violation.typeProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.offenseProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.actionTakenProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.suspensionDaysProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.sanctionProperty().addListener((obs, oldValue, newValue) -> persistViolations());
         violation.dateProperty().addListener((obs, oldValue, newValue) -> persistViolations());
+        violation.completedDateProperty().addListener((obs, oldValue, newValue) -> persistViolations());
         violation.statusProperty().addListener((obs, oldValue, newValue) -> persistViolations());
         violation.schoolYearProperty().addListener((obs, oldValue, newValue) -> persistViolations());
         violation.reportedByProperty().addListener((obs, oldValue, newValue) -> persistViolations());
@@ -166,7 +191,7 @@ public final class DataStore {
     private static void persistViolations() {
         try (Connection connection = connect(); PreparedStatement delete = connection.prepareStatement("DELETE FROM violations");
              PreparedStatement insert = connection.prepareStatement(
-                     "INSERT INTO violations (id, student_name, student_id, section, type, date, status, school_year, reported_by, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                     "INSERT INTO violations (id, student_name, student_id, section, type, offense, action_taken, suspension_days, sanction, date, completed_date, status, school_year, reported_by, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             delete.executeUpdate();
             for (Violation violation : VIOLATIONS) {
                 insert.setInt(1, violation.getId());
@@ -174,11 +199,16 @@ public final class DataStore {
                 insert.setString(3, violation.getStudentId());
                 insert.setString(4, violation.getSection());
                 insert.setString(5, violation.getType());
-                insert.setString(6, violation.getDate().toString());
-                insert.setString(7, violation.getStatus());
-                insert.setString(8, violation.getSchoolYear());
-                insert.setString(9, violation.getReportedBy());
-                insert.setString(10, violation.getDescription());
+                insert.setString(6, violation.getOffense());
+                insert.setString(7, violation.getActionTaken());
+                insert.setInt(8, violation.getSuspensionDays());
+                insert.setString(9, violation.getSanction());
+                insert.setString(10, violation.getDate().toString());
+                insert.setString(11, violation.getCompletedDate() == null ? null : violation.getCompletedDate().toString());
+                insert.setString(12, violation.getStatus());
+                insert.setString(13, violation.getSchoolYear());
+                insert.setString(14, violation.getReportedBy());
+                insert.setString(15, violation.getDescription());
                 insert.addBatch();
             }
             insert.executeBatch();

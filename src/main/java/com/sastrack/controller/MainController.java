@@ -129,9 +129,9 @@ public class MainController {
         DashboardController c = (DashboardController) loadView("dashboard.fxml");
     }
 
-    public void showViolations(String typeFilter) {
+    public void showViolations(String sectionFilter) {
         ViolationsController c = (ViolationsController) loadView("violations.fxml");
-        if (c != null) c.applyTypeFilter(typeFilter);
+        if (c != null) c.applySectionFilter(sectionFilter);
     }
 
     public void showViolationsWithStatus(String statusGroup) {
@@ -182,9 +182,6 @@ public class MainController {
     }
 
     @FXML private void showViolationsAll() { showViolations("All"); }
-    @FXML private void showViolationsMinor() { showViolations("Minor Offense"); }
-    @FXML private void showViolationsMajor() { showViolations("Major Offense"); }
-    @FXML private void showViolationsSerious() { showViolations("Serious Offense"); }
     @FXML private void addViolation() {
         ViolationsController c = (ViolationsController) loadView("violations.fxml");
         if (c != null) c.openViolationDialog(null);

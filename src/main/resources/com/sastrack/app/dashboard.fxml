@@ -44,7 +44,7 @@
 
         <VBox styleClass="panel" spacing="10">
             <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="VIOLATIONS BY OFFENSE TYPE" styleClass="panel-title"/>
+                <Label text="VIOLATIONS OVER TIME" styleClass="panel-title"/>
                 <Pane HBox.hgrow="ALWAYS"/>
                 <ToggleButton fx:id="viewMonthToggle" text="By month" styleClass="toggle-chip"/>
                 <ToggleButton fx:id="viewYearToggle" text="By year" styleClass="toggle-chip"/>

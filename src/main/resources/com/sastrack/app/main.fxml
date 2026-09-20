@@ -31,9 +31,6 @@
                 <Button fx:id="navViolationsHead" text="⚖  SAS Violations" styleClass="nav-link" maxWidth="Infinity" onAction="#toggleViolationsGroup"/>
                 <VBox fx:id="violationsSub" styleClass="subnav">
                     <Button text="All records" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsAll"/>
-                    <Button text="Minor offenses" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsMinor"/>
-                    <Button text="Major offenses" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsMajor"/>
-                    <Button text="Serious offenses" styleClass="sub-link" maxWidth="Infinity" onAction="#showViolationsSerious"/>
                     <Button text="Add violation" styleClass="sub-link" maxWidth="Infinity" onAction="#addViolation"/>
                 </VBox>
             </VBox>

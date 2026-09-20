@@ -48,8 +48,6 @@ public class DashboardController implements MainController.MainAware {
     private MainController mainController;
     private boolean byMonth = true;
 
-    private static final String[] TYPES = {"Minor Offense", "Major Offense", "Serious Offense"};
-
     @Override
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
@@ -197,63 +195,40 @@ public class DashboardController implements MainController.MainAware {
         offenseChart.getData().clear();
         xAxis.setLabel(byMonth ? "Month (" + year + ")" : "School year");
 
-        Map<String, XYChart.Series<String, Number>> seriesByType = new LinkedHashMap<>();
-        for (String type : TYPES) {
-            XYChart.Series<String, Number> s = new XYChart.Series<>();
-            s.setName(type.replace(" Offense", ""));
-            seriesByType.put(type, s);
-        }
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Violations");
 
         if (byMonth) {
             String[] months = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-            Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
+            Map<String, Integer> counts = new LinkedHashMap<>();
             for (String m : months) {
-                counts.put(m, new LinkedHashMap<>());
-                for (String type : TYPES) {
-                    counts.get(m).put(type, 0);
-                }
+                counts.put(m, 0);
             }
             for (Violation v : DataStore.VIOLATIONS) {
                 if (!v.getSchoolYear().equals(year)) continue;
                 String monthKey = v.getDate().getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
                 String monthLabel = monthKey.substring(0, 3);
-                if (!counts.containsKey(monthLabel)) {
-                    counts.put(monthLabel, new LinkedHashMap<>());
-                    for (String type : TYPES) {
-                        counts.get(monthLabel).put(type, 0);
-                    }
-                }
-                counts.get(monthLabel).merge(v.getType(), 1, Integer::sum);
+                counts.merge(monthLabel, 1, Integer::sum);
             }
             for (String m : months) {
-                for (String type : TYPES) {
-                    int c = counts.getOrDefault(m, new LinkedHashMap<>()).getOrDefault(type, 0);
-                    seriesByType.get(type).getData().add(new XYChart.Data<>(m, c));
-                }
+                series.getData().add(new XYChart.Data<>(m, counts.getOrDefault(m, 0)));
             }
         } else {
             TreeSet<String> years = new TreeSet<>(Comparator.reverseOrder());
             DataStore.VIOLATIONS.forEach(v -> years.add(v.getSchoolYear()));
-            Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
+            Map<String, Integer> counts = new LinkedHashMap<>();
             for (String y : years) {
-                counts.put(y, new LinkedHashMap<>());
-                for (String type : TYPES) {
-                    counts.get(y).put(type, 0);
-                }
+                counts.put(y, 0);
             }
             for (Violation v : DataStore.VIOLATIONS) {
-                counts.computeIfAbsent(v.getSchoolYear(), ignored -> new LinkedHashMap<>());
-                counts.get(v.getSchoolYear()).merge(v.getType(), 1, Integer::sum);
+                counts.merge(v.getSchoolYear(), 1, Integer::sum);
             }
             for (String y : years) {
-                for (String type : TYPES) {
-                    int c = counts.getOrDefault(y, new LinkedHashMap<>()).getOrDefault(type, 0);
-                    seriesByType.get(type).getData().add(new XYChart.Data<>(y, c));
-                }
+                series.getData().add(new XYChart.Data<>(y, counts.getOrDefault(y, 0)));
             }
         }
 
-        offenseChart.getData().addAll(seriesByType.values());
+        offenseChart.getData().add(series);
     }
 
     @FXML private void goToAllViolations() { if (mainController != null) mainController.showViolations("All"); }

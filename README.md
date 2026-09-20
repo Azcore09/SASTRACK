@@ -37,13 +37,16 @@ The packaged app is created under `build/jpackage/` and can be launched directly
   icon-only width.
 - **Lost & Found nav group** — All items / Unclaimed / Claimed / Log found
   item, each swaps the table filter or opens the log-item dialog directly.
-- **Guidance Violations nav group** — same pattern, filtered by Minor /
-  Major / Serious, plus Add violation.
+- **Guidance Violations nav group** — section-based filtering using the
+  numbered violation catalog, plus Add violation with a dependent section and
+  violation dropdown.
+- Violation records also include offense occurrence, action taken, a
+  customizable non-negative suspension-day value, sanction, date reported,
+  and optional date completed.
 - **Dashboard** — four clickable stat cards (Total records, Lost & Found,
   Active violations, Resolved cases) that jump straight to the filtered
-  table behind each number. The offense-type chart toggles between
-  "by month" (within the selected school year) and "by year" (across all
-  school years).
+  table behind each number. The violations chart toggles between "by month"
+  (within the selected school year) and "by year" (across all school years).
 - **School year archive** — every record carries a `schoolYear` field.
   Dashboard and both table views have a School Year filter so you can pull
   up 2025-2026 records without touching 2026-2027 data.
