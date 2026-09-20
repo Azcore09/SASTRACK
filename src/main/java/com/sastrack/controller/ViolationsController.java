@@ -4,14 +4,12 @@ import com.sastrack.app.Session;
 import com.sastrack.data.DataStore;
 import com.sastrack.model.Violation;
 import com.sastrack.model.ViolationCatalog;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -37,7 +35,8 @@ public class ViolationsController implements MainController.MainAware {
     @FXML private TableColumn<Violation, String> colStatus;
     @FXML private TableColumn<Violation, String> colYear;
     @FXML private TableColumn<Violation, String> colBy;
-    @FXML private TableColumn<Violation, Void> colActions;
+    @FXML private Button editButton;
+    @FXML private Button deleteButton;
 
     private MainController mainController;
     private String statusGroupFilter = null; // "Active" / "Resolved" / null
@@ -61,7 +60,14 @@ public class ViolationsController implements MainController.MainAware {
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colYear.setCellValueFactory(new PropertyValueFactory<>("schoolYear"));
         colBy.setCellValueFactory(new PropertyValueFactory<>("reportedBy"));
-        addActionsColumn();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
+            boolean hasSelection = newValue != null;
+            editButton.setDisable(!hasSelection);
+            deleteButton.setDisable(!hasSelection);
+        });
+        editButton.setDisable(true);
+        deleteButton.setDisable(true);
 
         sectionFilterBox.setItems(FXCollections.observableArrayList("N/A"));
         sectionFilterBox.getItems().addAll(ViolationCatalog.sections());
@@ -109,31 +115,31 @@ public class ViolationsController implements MainController.MainAware {
         table.setItems(filtered);
     }
 
-    private void addActionsColumn() {
-        colActions.setCellValueFactory(cd -> new SimpleObjectProperty<>());
-        colActions.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn = new Button("Edit");
-            private final Button delBtn = new Button("Delete");
-            private final HBox box = new HBox(6, editBtn, delBtn);
-            {
-                editBtn.getStyleClass().add("btn-outline-small");
-                delBtn.getStyleClass().add("btn-outline-small");
-                editBtn.setOnAction(e -> openViolationDialog(getTableView().getItems().get(getIndex())));
-                delBtn.setOnAction(e -> {
-                    if (Session.getCurrentUser() == null || !Session.getCurrentUser().isAdmin()) {
-                        new Alert(Alert.AlertType.WARNING, "Only an SAS Head account can delete records.").showAndWait();
-                        return;
-                    }
-                    DataStore.VIOLATIONS.remove(getTableView().getItems().get(getIndex()));
-                    refresh();
-                });
-            }
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : box);
-            }
-        });
+    @FXML
+    private void handleEditSelected() {
+        Violation selected = table.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            openViolationDialog(selected);
+        }
+    }
+
+    @FXML
+    private void handleDeleteSelected() {
+        Violation selected = table.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        if (Session.getCurrentUser() == null || !Session.getCurrentUser().isAdmin()) {
+            new Alert(Alert.AlertType.WARNING, "Only an SAS Head account can delete records.").showAndWait();
+            return;
+        }
+        DataStore.VIOLATIONS.remove(selected);
+        refresh();
+    }
+
+    @FXML
+    private void handleUnselect() {
+        table.getSelectionModel().clearSelection();
     }
 
     @FXML

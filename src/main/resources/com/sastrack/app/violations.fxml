@@ -20,6 +20,13 @@
         <ComboBox fx:id="schoolYearFilterBox" onAction="#refresh"/>
     </HBox>
 
+    <HBox spacing="8" alignment="CENTER_LEFT">
+        <Button fx:id="editButton" text="Edit selected" styleClass="btn-outline" onAction="#handleEditSelected"/>
+        <Button fx:id="deleteButton" text="Delete selected" styleClass="btn-outline" onAction="#handleDeleteSelected"/>
+        <Button text="Unselect" styleClass="btn-outline" onAction="#handleUnselect"/>
+        <Label text="Select a row to manage its record." styleClass="muted-text"/>
+    </HBox>
+
     <TableView fx:id="table" VBox.vgrow="ALWAYS">
         <columns>
             <TableColumn fx:id="colName" text="Student" prefWidth="160"/>
@@ -34,7 +41,6 @@
             <TableColumn fx:id="colStatus" text="Status" prefWidth="110"/>
             <TableColumn fx:id="colYear" text="School Year" prefWidth="100"/>
             <TableColumn fx:id="colBy" text="Reported By" prefWidth="110"/>
-            <TableColumn fx:id="colActions" text="" prefWidth="90"/>
         </columns>
     </TableView>
 </VBox>

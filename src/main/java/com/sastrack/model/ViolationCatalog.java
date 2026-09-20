@@ -50,19 +50,19 @@ public final class ViolationCatalog {
                 "h. Repeated warning offenses",
                 "i. Firecrackers"));
         sections.put("1.9 IT Resources", List.of("a. Violating IT policies"));
-        sections.put("2.1 Fraud", List.of(
+        sections.put("2.1 RSO Fraud", List.of(
                 "a. False statements during registration",
                 "b. False statements when using facilities",
                 "c. False statements for grants or prizes",
                 "d. Hiding member/officer changes",
                 "e. Misusing the organization's name"));
-        sections.put("2.2 Harm to Persons", List.of(
+        sections.put("2.2 RSO Harm to Persons", List.of(
                 "a. Fights or disturbances",
                 "b. Accepting members without one-semester residency",
                 "c. Violating Anti-Hazing Law (RA 8049)"));
-        sections.put("2.3 Damage to Property", List.of(
+        sections.put("2.3 RSO Damage to Property", List.of(
                 "a. Damage, littering, vandalism, or unauthorized entry"));
-        sections.put("2.4 Any Other Misconduct", List.of(
+        sections.put("2.4 RSO Any Other Misconduct", List.of(
                 "a. Disobeying school authorities",
                 "b. Harming the school's order or reputation"));
         return Collections.unmodifiableMap(sections);

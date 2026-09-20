@@ -3,14 +3,12 @@ package com.sastrack.controller;
 import com.sastrack.app.Session;
 import com.sastrack.data.DataStore;
 import com.sastrack.model.LostItem;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -29,7 +27,8 @@ public class LostFoundController implements MainController.MainAware {
     @FXML private TableColumn<LostItem, String> colLocation;
     @FXML private TableColumn<LostItem, String> colStatus;
     @FXML private TableColumn<LostItem, String> colClaimant;
-    @FXML private TableColumn<LostItem, Void> colActions;
+    @FXML private Button editButton;
+    @FXML private Button deleteButton;
 
     private MainController mainController;
 
@@ -46,7 +45,14 @@ public class LostFoundController implements MainController.MainAware {
         colLocation.setCellValueFactory(new PropertyValueFactory<>("location"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colClaimant.setCellValueFactory(new PropertyValueFactory<>("claimant"));
-        addActionsColumn();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
+            boolean hasSelection = newValue != null;
+            editButton.setDisable(!hasSelection);
+            deleteButton.setDisable(!hasSelection);
+        });
+        editButton.setDisable(true);
+        deleteButton.setDisable(true);
 
         statusFilterBox.setItems(FXCollections.observableArrayList("All", "Unclaimed", "Claimed"));
         statusFilterBox.getSelectionModel().selectFirst();
@@ -79,31 +85,31 @@ public class LostFoundController implements MainController.MainAware {
         table.setItems(filtered);
     }
 
-    private void addActionsColumn() {
-        colActions.setCellValueFactory(cd -> new SimpleObjectProperty<>());
-        colActions.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn = new Button("Edit");
-            private final Button delBtn = new Button("Delete");
-            private final HBox box = new HBox(6, editBtn, delBtn);
-            {
-                editBtn.getStyleClass().add("btn-outline-small");
-                delBtn.getStyleClass().add("btn-outline-small");
-                editBtn.setOnAction(e -> openItemDialog(getTableView().getItems().get(getIndex())));
-                delBtn.setOnAction(e -> {
-                    if (Session.getCurrentUser() == null || !Session.getCurrentUser().isAdmin()) {
-                        new Alert(Alert.AlertType.WARNING, "Only an SAS Head account can delete records.").showAndWait();
-                        return;
-                    }
-                    DataStore.ITEMS.remove(getTableView().getItems().get(getIndex()));
-                    refresh();
-                });
-            }
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : box);
-            }
-        });
+    @FXML
+    private void handleEditSelected() {
+        LostItem selected = table.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            openItemDialog(selected);
+        }
+    }
+
+    @FXML
+    private void handleDeleteSelected() {
+        LostItem selected = table.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        if (Session.getCurrentUser() == null || !Session.getCurrentUser().isAdmin()) {
+            new Alert(Alert.AlertType.WARNING, "Only an SAS Head account can delete records.").showAndWait();
+            return;
+        }
+        DataStore.ITEMS.remove(selected);
+        refresh();
+    }
+
+    @FXML
+    private void handleUnselect() {
+        table.getSelectionModel().clearSelection();
     }
 
     @FXML
