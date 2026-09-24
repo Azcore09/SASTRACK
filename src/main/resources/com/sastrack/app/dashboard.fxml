@@ -16,7 +16,7 @@
             <Label text="School Year" styleClass="field-label"/>
             <ComboBox fx:id="schoolYearCombo" onAction="#refresh"/>
             <Button fx:id="newSchoolYearBtn" text="+ New" styleClass="btn-outline" onAction="#addSchoolYear"/>
-            <Button fx:id="deleteSchoolYearBtn" text="Delete" styleClass="btn-outline-small" onAction="#deleteSchoolYear"/>
+            <Button fx:id="deleteSchoolYearBtn" text="Delete" styleClass="btn-danger-small" onAction="#deleteSchoolYear"/>
         </HBox>
 
         <HBox spacing="16">

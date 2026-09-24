@@ -14,22 +14,31 @@ public class Violation {
     private final IntegerProperty suspensionDays = new SimpleIntegerProperty();
     private final StringProperty sanction = new SimpleStringProperty("N/A");
     private final ObjectProperty<LocalDate> date = new SimpleObjectProperty<>();
+    private final ObjectProperty<LocalDate> conferenceDate = new SimpleObjectProperty<>();
     private final ObjectProperty<LocalDate> completedDate = new SimpleObjectProperty<>();
     private final StringProperty status = new SimpleStringProperty();     // Pending / Under Review / Resolved
     private final StringProperty schoolYear = new SimpleStringProperty(); // e.g. "2026-2027"
     private final StringProperty reportedBy = new SimpleStringProperty();
-    private final StringProperty description = new SimpleStringProperty();
+    private final StringProperty remarks = new SimpleStringProperty();
 
     public Violation(int id, String studentName, String studentId, String section, String type,
-                      LocalDate date, String status, String schoolYear, String reportedBy, String description) {
+                      LocalDate date, String status, String schoolYear, String reportedBy, String remarks) {
         this(id, studentName, studentId, section, type, "N/A", "N/A", 0, "N/A",
-                date, null, status, schoolYear, reportedBy, description);
+                date, null, null, status, schoolYear, reportedBy, remarks);
     }
 
     public Violation(int id, String studentName, String studentId, String section, String type,
-                     String offense, String actionTaken, int suspensionDays, String sanction,
-                     LocalDate date, LocalDate completedDate, String status, String schoolYear,
-                     String reportedBy, String description) {
+                      String offense, String actionTaken, int suspensionDays, String sanction,
+                      LocalDate date, LocalDate completedDate, String status, String schoolYear,
+                      String reportedBy, String remarks) {
+        this(id, studentName, studentId, section, type, offense, actionTaken, suspensionDays, sanction,
+                date, null, completedDate, status, schoolYear, reportedBy, remarks);
+    }
+
+    public Violation(int id, String studentName, String studentId, String section, String type,
+                      String offense, String actionTaken, int suspensionDays, String sanction,
+                      LocalDate date, LocalDate conferenceDate, LocalDate completedDate, String status,
+                      String schoolYear, String reportedBy, String remarks) {
         this.id.set(id);
         this.studentName.set(studentName);
         this.studentId.set(studentId);
@@ -40,20 +49,23 @@ public class Violation {
         this.suspensionDays.set(suspensionDays);
         this.sanction.set(sanction);
         this.date.set(date);
+        this.conferenceDate.set(conferenceDate);
         this.completedDate.set(completedDate);
         this.status.set(status);
         this.schoolYear.set(schoolYear);
         this.reportedBy.set(reportedBy);
-        this.description.set(description);
+        this.remarks.set(remarks);
     }
 
     public int getId() { return id.get(); }
     public IntegerProperty idProperty() { return id; }
 
     public String getStudentName() { return studentName.get(); }
+    public void setStudentName(String v) { studentName.set(v); }
     public StringProperty studentNameProperty() { return studentName; }
 
     public String getStudentId() { return studentId.get(); }
+    public void setStudentId(String v) { studentId.set(v); }
     public StringProperty studentIdProperty() { return studentId; }
 
     public String getSection() { return section.get(); }
@@ -84,6 +96,10 @@ public class Violation {
     public void setDate(LocalDate v) { date.set(v); }
     public ObjectProperty<LocalDate> dateProperty() { return date; }
 
+    public LocalDate getConferenceDate() { return conferenceDate.get(); }
+    public void setConferenceDate(LocalDate v) { conferenceDate.set(v); }
+    public ObjectProperty<LocalDate> conferenceDateProperty() { return conferenceDate; }
+
     public LocalDate getCompletedDate() { return completedDate.get(); }
     public void setCompletedDate(LocalDate v) { completedDate.set(v); }
     public ObjectProperty<LocalDate> completedDateProperty() { return completedDate; }
@@ -93,11 +109,17 @@ public class Violation {
     public StringProperty statusProperty() { return status; }
 
     public String getSchoolYear() { return schoolYear.get(); }
+    public void setSchoolYear(String v) { schoolYear.set(v); }
     public StringProperty schoolYearProperty() { return schoolYear; }
 
     public String getReportedBy() { return reportedBy.get(); }
     public StringProperty reportedByProperty() { return reportedBy; }
 
-    public String getDescription() { return description.get(); }
-    public StringProperty descriptionProperty() { return description; }
+    public String getRemarks() { return remarks.get(); }
+    public void setRemarks(String v) { remarks.set(v); }
+    public StringProperty remarksProperty() { return remarks; }
+
+    public String getDescription() { return getRemarks(); }
+    public void setDescription(String v) { setRemarks(v); }
+    public StringProperty descriptionProperty() { return remarks; }
 }

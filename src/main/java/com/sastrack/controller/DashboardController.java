@@ -80,22 +80,22 @@ public class DashboardController implements MainController.MainAware {
 
     private void refreshSchoolYearOptions() {
         TreeSet<String> years = new TreeSet<>(Comparator.reverseOrder());
+        years.addAll(DataStore.SCHOOL_YEARS);
         DataStore.VIOLATIONS.forEach(v -> years.add(v.getSchoolYear()));
         DataStore.ITEMS.forEach(i -> years.add(i.getSchoolYear()));
 
         schoolYearCombo.getItems().setAll(years);
         if (schoolYearCombo.getItems().isEmpty()) {
             schoolYearCombo.setValue(null);
-            schoolYearCombo.setDisable(true);
             deleteSchoolYearBtn.setDisable(true);
             return;
         }
 
         schoolYearCombo.setDisable(false);
-        deleteSchoolYearBtn.setDisable(false);
         if (schoolYearCombo.getValue() == null || !schoolYearCombo.getItems().contains(schoolYearCombo.getValue())) {
             schoolYearCombo.getSelectionModel().selectFirst();
         }
+        deleteSchoolYearBtn.setDisable(schoolYearCombo.getValue() == null);
     }
 
     @FXML
@@ -104,7 +104,7 @@ public class DashboardController implements MainController.MainAware {
         dialog.setTitle("Add School Year");
         dialog.setHeaderText("Create a new school year");
         dialog.setContentText("School year:");
-        dialog.getEditor().setPromptText("2026-2027");
+        dialog.getEditor().setPromptText("YYYY-YYYY");
         dialog.getEditor().setText("");
 
         dialog.showAndWait().ifPresent(input -> {
@@ -123,10 +123,8 @@ public class DashboardController implements MainController.MainAware {
                 return;
             }
 
-            List<String> items = new java.util.ArrayList<>(schoolYearCombo.getItems());
-            items.add(year);
-            items.sort(Comparator.reverseOrder());
-            schoolYearCombo.getItems().setAll(items);
+            DataStore.SCHOOL_YEARS.add(year);
+            refreshSchoolYearOptions();
             schoolYearCombo.getSelectionModel().select(year);
             refresh();
         });
@@ -142,12 +140,13 @@ public class DashboardController implements MainController.MainAware {
         javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Delete School Year");
         confirm.setHeaderText("Delete school year " + selected + "?");
-        confirm.setContentText("This will remove all matching records from the dashboard data for this school year.");
+        confirm.setContentText("This will permanently remove all violation and lost-and-found records for this school year.");
 
         confirm.showAndWait().ifPresent(result -> {
             if (result == javafx.scene.control.ButtonType.OK) {
                 DataStore.VIOLATIONS.removeIf(v -> selected.equals(v.getSchoolYear()));
                 DataStore.ITEMS.removeIf(i -> selected.equals(i.getSchoolYear()));
+                DataStore.SCHOOL_YEARS.remove(selected);
                 refreshSchoolYearOptions();
                 refresh();
             }

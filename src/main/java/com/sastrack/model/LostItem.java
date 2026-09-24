@@ -49,5 +49,6 @@ public class LostItem {
     public StringProperty claimantProperty() { return claimant; }
 
     public String getSchoolYear() { return schoolYear.get(); }
+    public void setSchoolYear(String v) { schoolYear.set(v); }
     public StringProperty schoolYearProperty() { return schoolYear; }
 }

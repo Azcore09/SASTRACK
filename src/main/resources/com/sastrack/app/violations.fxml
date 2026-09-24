@@ -20,27 +20,28 @@
         <ComboBox fx:id="schoolYearFilterBox" onAction="#refresh"/>
     </HBox>
 
-    <HBox spacing="8" alignment="CENTER_LEFT">
-        <Button fx:id="editButton" text="Edit selected" styleClass="btn-outline" onAction="#handleEditSelected"/>
-        <Button fx:id="deleteButton" text="Delete selected" styleClass="btn-outline" onAction="#handleDeleteSelected"/>
-        <Button text="Unselect" styleClass="btn-outline" onAction="#handleUnselect"/>
-        <Label text="Select a row to manage its record." styleClass="muted-text"/>
-    </HBox>
+     <HBox spacing="8" alignment="CENTER_LEFT">
+         <Button fx:id="viewButton" text="View selected" styleClass="btn-outline" onAction="#handleView"/>
+         <Button fx:id="editButton" text="Edit selected" styleClass="btn-outline" onAction="#handleEditSelected"/>
+         <Button fx:id="deleteButton" text="Delete selected" styleClass="btn-danger" onAction="#handleDeleteSelected"/>
+         <Button text="Unselect" styleClass="btn-outline" onAction="#handleUnselect"/>
+         <Label text="Select a row to manage its record." styleClass="muted-text"/>
+     </HBox>
 
     <TableView fx:id="table" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="colName" text="Student" prefWidth="160"/>
-            <TableColumn fx:id="colSection" text="Section" prefWidth="150"/>
-            <TableColumn fx:id="colType" text="Violation" prefWidth="260"/>
-            <TableColumn fx:id="colOffense" text="Offense" prefWidth="105"/>
-            <TableColumn fx:id="colActionTaken" text="Action Taken" prefWidth="125"/>
-            <TableColumn fx:id="colSuspensionDays" text="Suspension Days" prefWidth="110"/>
-            <TableColumn fx:id="colSanction" text="Sanction" prefWidth="180"/>
-            <TableColumn fx:id="colDate" text="Date Reported" prefWidth="105"/>
-            <TableColumn fx:id="colCompletedDate" text="Date Completed" prefWidth="105"/>
-            <TableColumn fx:id="colStatus" text="Status" prefWidth="110"/>
-            <TableColumn fx:id="colYear" text="School Year" prefWidth="100"/>
-            <TableColumn fx:id="colBy" text="Reported By" prefWidth="110"/>
-        </columns>
-    </TableView>
+         <columns>
+             <TableColumn fx:id="colName" text="Student" prefWidth="160"/>
+             <TableColumn fx:id="colSection" text="Section" prefWidth="150"/>
+             <TableColumn fx:id="colType" text="Violation" prefWidth="260"/>
+             <TableColumn fx:id="colOffense" text="Offense" prefWidth="105"/>
+             <TableColumn fx:id="colActionTaken" text="Action Taken" prefWidth="125"/>
+             <TableColumn fx:id="colSuspensionDays" text="Suspension Days" prefWidth="110"/>
+             <TableColumn fx:id="colSanction" text="Sanction(s)" prefWidth="200"/>
+             <TableColumn fx:id="colDate" text="Date Reported" prefWidth="105"/>
+             <TableColumn fx:id="colCompletedDate" text="Date Completed" prefWidth="105"/>
+             <TableColumn fx:id="colStatus" text="Status" prefWidth="110"/>
+             <TableColumn fx:id="colYear" text="School Year" prefWidth="100"/>
+             <TableColumn fx:id="colBy" text="Reported By" prefWidth="110"/>
+         </columns>
+     </TableView>
 </VBox>
