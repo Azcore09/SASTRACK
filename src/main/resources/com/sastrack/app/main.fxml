@@ -37,7 +37,9 @@
 
             <Pane VBox.vgrow="ALWAYS"/>
 
-            <Button fx:id="logoutBtn" text="⏻  Logout" styleClass="nav-link" maxWidth="Infinity" onAction="#handleLogout"/>
+            <VBox fx:id="sidebarFooter" alignment="CENTER_LEFT" maxWidth="Infinity">
+                <Button fx:id="logoutBtn" text="⏻  Logout" styleClass="nav-link" maxWidth="Infinity" onAction="#handleLogout"/>
+            </VBox>
         </VBox>
     </left>
 

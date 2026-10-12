@@ -66,7 +66,13 @@
                                <VBox spacing="10">
                                    <children>
                                        <Label text="Password" styleClass="field-label"/>
-                                       <PasswordField fx:id="passwordField" promptText="Password"/>
+                                       <StackPane>
+                                           <children>
+                                               <PasswordField fx:id="passwordField" promptText="Password" maxWidth="Infinity"/>
+                                               <TextField fx:id="visiblePasswordField" promptText="Password" maxWidth="Infinity" visible="false" managed="false"/>
+                                               <Button fx:id="togglePasswordButton" text="◉" onAction="#togglePasswordVisibility" StackPane.alignment="CENTER_RIGHT" styleClass="password-toggle" focusTraversable="false" mnemonicParsing="false"/>
+                                           </children>
+                                       </StackPane>
                                    </children>
                                </VBox>
 

@@ -51,7 +51,38 @@ public class MainController {
             userLabel.setText(Session.getCurrentUser().getUsername() + "  ·  " + Session.getCurrentUser().getRole());
         }
 
+        restoreSidebarButtonLabels();
         showDashboard();
+    }
+
+    private void restoreSidebarButtonLabels() {
+        navDashboard.setText("▦  Dashboard");
+        navLostFoundHead.setText("🎒  Lost & Found");
+        navViolationsHead.setText("⚖  SAS Violations");
+        logoutBtn.setText("⏻  Logout");
+        logoutBtn.setVisible(true);
+        logoutBtn.setManaged(true);
+    }
+
+    private void applySidebarButtonMode(boolean isCollapsed) {
+        if (isCollapsed) {
+            setButtonIconOnly(navDashboard, "▦");
+            setButtonIconOnly(navLostFoundHead, "🎒");
+            setButtonIconOnly(navViolationsHead, "⚖");
+            // Keep logout visible at all times so the user can always sign out.
+            logoutBtn.setText("⏻  Logout");
+            logoutBtn.setVisible(true);
+            logoutBtn.setManaged(true);
+        } else {
+            restoreSidebarButtonLabels();
+        }
+    }
+
+    private void setButtonIconOnly(Button button, String icon) {
+        button.setText(icon);
+        button.setVisible(true);
+        button.setManaged(true);
+        button.setWrapText(false);
     }
 
     /* ---------------- Sidebar collapse ---------------- */
@@ -67,6 +98,8 @@ public class MainController {
             violationsSub.setVisible(false);
             violationsSub.setManaged(false);
             collapseBtn.setText("⟩");
+            logoutBtn.setVisible(true);
+            logoutBtn.setManaged(true);
         } else {
             collapseBtn.setText("⟨");
         }
@@ -88,25 +121,10 @@ public class MainController {
                         new KeyValue(sidebar.prefWidthProperty(), targetWidth, Interpolator.EASE_BOTH),
                         new KeyValue(sidebar.minWidthProperty(), targetWidth, Interpolator.EASE_BOTH))
         );
-        widthAnim.setOnFinished(e -> {
-            if (collapsed) {
-                setButtonIconOnly(navDashboard, "▦");
-                setButtonIconOnly(navLostFoundHead, "🎒");
-                setButtonIconOnly(navViolationsHead, "⚖");
-                setButtonIconOnly(logoutBtn, "⏻");
-            } else {
-                navDashboard.setText("▦  Dashboard");
-                navLostFoundHead.setText("🎒  Lost & Found");
-                navViolationsHead.setText("⚖  SAS Violations");
-                logoutBtn.setText("⏻  Logout");
-            }
-        });
+        widthAnim.setOnFinished(e -> applySidebarButtonMode(collapsed));
         widthAnim.play();
     }
 
-    private void setButtonIconOnly(Button b, String icon) {
-        b.setText(icon);
-    }
 
     @FXML
     private void toggleLostFoundGroup() {

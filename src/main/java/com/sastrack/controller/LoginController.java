@@ -10,6 +10,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -24,10 +25,22 @@ public class LoginController {
     @FXML private VBox loginCard;
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
+    @FXML private TextField visiblePasswordField;
+    @FXML private Button togglePasswordButton;
     @FXML private Label errorLabel;
 
     @FXML
     private void initialize() {
+        passwordField.textProperty().addListener((obs, oldText, newText) -> {
+            if (!visiblePasswordField.isVisible()) {
+                visiblePasswordField.setText(newText);
+            }
+        });
+        visiblePasswordField.textProperty().addListener((obs, oldText, newText) -> {
+            if (!passwordField.isVisible()) {
+                passwordField.setText(newText);
+            }
+        });
         loginCard.setOpacity(0);
         loginCard.setTranslateY(16);
         FadeTransition fade = new FadeTransition(Duration.millis(400), loginCard);
@@ -36,6 +49,35 @@ public class LoginController {
                 new KeyValue(loginCard.translateYProperty(), 0, Interpolator.EASE_OUT)));
         fade.play();
         slide.play();
+    }
+
+    @FXML
+    private void togglePasswordVisibility() {
+        if (passwordField.isVisible()) {
+            String currentPassword = passwordField.getText();
+            passwordField.setVisible(false);
+            passwordField.setManaged(false);
+            visiblePasswordField.setText(currentPassword);
+            visiblePasswordField.setVisible(true);
+            visiblePasswordField.setManaged(true);
+            visiblePasswordField.requestFocus();
+            visiblePasswordField.positionCaret(currentPassword.length());
+            togglePasswordButton.setText("◌");
+        } else {
+            String currentPassword = visiblePasswordField.getText();
+            visiblePasswordField.setVisible(false);
+            visiblePasswordField.setManaged(false);
+            passwordField.setText(currentPassword);
+            passwordField.setVisible(true);
+            passwordField.setManaged(true);
+            passwordField.requestFocus();
+            passwordField.positionCaret(currentPassword.length());
+            togglePasswordButton.setText("◉");
+        }
+    }
+
+    private String getCurrentPassword() {
+        return visiblePasswordField.isVisible() ? visiblePasswordField.getText() : passwordField.getText();
     }
 
     private void shakeOnError() {
@@ -53,7 +95,7 @@ public class LoginController {
     @FXML
     private void handleLogin() {
         String username = usernameField.getText() == null ? "" : usernameField.getText().trim();
-        String password = passwordField.getText() == null ? "" : passwordField.getText();
+        String password = getCurrentPassword();
 
         Optional<User> match = DataStore.USERS.stream()
                 .filter(u -> u.getUsername().equalsIgnoreCase(username) && u.getPassword().equals(password))

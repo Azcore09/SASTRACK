@@ -1,6 +1,7 @@
 package com.sastrack.app;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.Parent;
@@ -16,11 +17,17 @@ public class MainApp extends Application {
     public void start(Stage stage) throws IOException {
         primaryStage = stage;
         stage.setTitle("SAS-TRACK");
-        // Make the application window fill the screen on launch
+        // To make the application window fill the screen on launch.
         stage.setMaximized(true);
         // For true fullscreen (hides OS chrome) use: stage.setFullScreen(true);
         showLogin();
         stage.show();
+        Platform.runLater(() -> {
+            if (stage.isMaximized()) {
+                stage.setMaximized(false);
+                stage.setMaximized(true);
+            }
+        });
     }
 
     public static void showLogin() throws IOException {
@@ -30,6 +37,12 @@ public class MainApp extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(760);
         primaryStage.setMinHeight(520);
+        Platform.runLater(() -> {
+            if (primaryStage.isMaximized()) {
+                primaryStage.setMaximized(false);
+                primaryStage.setMaximized(true);
+            }
+        });
     }
 
     public static void showMain() throws IOException {
@@ -38,6 +51,12 @@ public class MainApp extends Application {
         scene.getStylesheets().add(MainApp.class.getResource("/com/sastrack/css/app.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setMaximized(true);
+        Platform.runLater(() -> {
+            if (primaryStage.isMaximized()) {
+                primaryStage.setMaximized(false);
+                primaryStage.setMaximized(true);
+            }
+        });
     }
 
     @Override
