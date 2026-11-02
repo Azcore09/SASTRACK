@@ -307,6 +307,33 @@
 /* ---------- Panels ---------- */
 .panel { -fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #e7e9f0; -fx-border-radius: 12; -fx-padding: 18; -fx-effect: dropshadow(gaussian, rgba(14,27,61,0.05), 10, 0, 0, 3); }
 .panel-title { -fx-font-size: 12.5px; -fx-font-weight: bold; -fx-text-fill: #0e1b3d; }
+.dashboard-export-panel {
+    -fx-background-color: linear-gradient(to right, #ffffff, #f3f7ff);
+    -fx-border-color: #dce7fb;
+}
+.dashboard-export-icon {
+    -fx-background-color: linear-gradient(to bottom, #2f6fed, #1b4fb7);
+    -fx-background-radius: 10;
+    -fx-min-width: 46;
+    -fx-min-height: 46;
+    -fx-alignment: center;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(47,111,237,0.2), 8, 0.16, 0, 2);
+}
+.dashboard-export-heading {
+    -fx-font-size: 12.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0e1b3d;
+}
+.dashboard-export-description {
+    -fx-font-size: 11px;
+    -fx-text-fill: #52657d;
+}
+.dashboard-export-button {
+    -fx-padding: 11 18;
+}
 .toggle-chip { -fx-background-color: #f5f6fa; -fx-text-fill: #52657d; -fx-border-color: #dfe3ed; -fx-border-width: 1; -fx-background-radius: 20; -fx-border-radius: 20; -fx-padding: 6 12; -fx-font-size: 11px; -fx-font-weight: bold; -fx-cursor: hand; }
 .toggle-chip:hover { -fx-background-color: #eaf1ff; -fx-border-color: #9dbbfa; }
 .toggle-chip:selected { -fx-background-color: #2f6fed; -fx-border-color: #2f6fed; -fx-text-fill: white; }

@@ -8,6 +8,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 import java.io.IOException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,10 +19,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 public final class DataStore {
 
     private static final Path DB_PATH = Paths.get(System.getProperty("user.dir"), "data", "sastrack.db");
+    private static final Path ITEM_PHOTOS_PATH = DB_PATH.getParent().resolve("lost-found-images");
 
     public static final ObservableList<User> USERS = FXCollections.observableArrayList(
             new User("admin", "admin123", "SAS Head"),
@@ -39,6 +47,50 @@ public final class DataStore {
         attachPersistence();
     }
 
+    public static void initializeSyncSupport() {
+        ensureSyncColumns();
+    }
+
+    private static void ensureSyncColumns() {
+        try (Connection connection = connect(); Statement statement = connection.createStatement()) {
+            ensureSyncColumnsForTable(statement, "violations");
+            ensureSyncColumnsForTable(statement, "lost_items");
+            ensureSyncColumnsForTable(statement, "school_years");
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to add sync metadata columns to SQLite tables.", e);
+        }
+    }
+
+    private static void ensureSyncColumnsForTable(Statement statement, String tableName) throws SQLException {
+        boolean hasCreatedAt = false;
+        boolean hasUpdatedAt = false;
+        boolean hasDeleted = false;
+        boolean hasSyncStatus = false;
+
+        try (ResultSet columns = statement.executeQuery("PRAGMA table_info(" + tableName + ")")) {
+            while (columns.next()) {
+                String name = columns.getString("name");
+                if ("created_at".equals(name)) hasCreatedAt = true;
+                if ("updated_at".equals(name)) hasUpdatedAt = true;
+                if ("deleted".equals(name)) hasDeleted = true;
+                if ("sync_status".equals(name)) hasSyncStatus = true;
+            }
+        }
+
+        if (!hasCreatedAt) {
+            statement.execute("ALTER TABLE " + tableName + " ADD COLUMN created_at TEXT NOT NULL DEFAULT ''");
+        }
+        if (!hasUpdatedAt) {
+            statement.execute("ALTER TABLE " + tableName + " ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''");
+        }
+        if (!hasDeleted) {
+            statement.execute("ALTER TABLE " + tableName + " ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0");
+        }
+        if (!hasSyncStatus) {
+            statement.execute("ALTER TABLE " + tableName + " ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'synced'");
+        }
+    }
+
     private static Connection connect() throws SQLException {
         return DriverManager.getConnection("jdbc:sqlite:" + DB_PATH.toAbsolutePath());
     }
@@ -52,6 +104,7 @@ public final class DataStore {
 
         try (Connection connection = connect(); Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE IF NOT EXISTS violations (id INTEGER PRIMARY KEY, student_name TEXT NOT NULL, student_id TEXT NOT NULL, section TEXT NOT NULL, type TEXT NOT NULL, offense TEXT NOT NULL DEFAULT 'N/A', action_taken TEXT NOT NULL DEFAULT 'N/A', suspension_days INTEGER NOT NULL DEFAULT 0, sanction TEXT NOT NULL DEFAULT 'N/A', date TEXT NOT NULL, conference_date TEXT, completed_date TEXT, status TEXT NOT NULL, school_year TEXT NOT NULL, reported_by TEXT NOT NULL, remarks TEXT NOT NULL DEFAULT '')");
+            ensureSyncColumnsForTable(statement, "violations");
             addViolationColumn(statement, "offense", "TEXT NOT NULL DEFAULT 'N/A'");
             addViolationColumn(statement, "action_taken", "TEXT NOT NULL DEFAULT 'N/A'");
             addViolationColumn(statement, "suspension_days", "INTEGER NOT NULL DEFAULT 0");
@@ -61,7 +114,10 @@ public final class DataStore {
             addViolationColumn(statement, "remarks", "TEXT NOT NULL DEFAULT ''");
             ensureViolationRemarksColumn(statement);
             statement.execute("CREATE TABLE IF NOT EXISTS lost_items (id INTEGER PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, date TEXT NOT NULL, location TEXT NOT NULL, status TEXT NOT NULL, claimant TEXT NOT NULL, school_year TEXT NOT NULL)");
+            ensureSyncColumnsForTable(statement, "lost_items");
+            statement.execute("CREATE TABLE IF NOT EXISTS lost_item_photos (item_id INTEGER NOT NULL, position INTEGER NOT NULL, file_name TEXT NOT NULL, PRIMARY KEY (item_id, position))");
             statement.execute("CREATE TABLE IF NOT EXISTS school_years (year TEXT PRIMARY KEY NOT NULL)");
+            ensureSyncColumnsForTable(statement, "school_years");
         } catch (SQLException e) {
             throw new IllegalStateException("Unable to initialize the SQLite database for SAS-TRACK.", e);
         }
@@ -149,6 +205,17 @@ public final class DataStore {
 
     private static void loadItems() {
         ITEMS.clear();
+        Map<Integer, List<String>> photoNamesByItem = new HashMap<>();
+        try (Connection connection = connect(); Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT item_id, file_name FROM lost_item_photos ORDER BY item_id ASC, position ASC")) {
+            while (rs.next()) {
+                photoNamesByItem.computeIfAbsent(rs.getInt("item_id"), ignored -> new ArrayList<>())
+                        .add(rs.getString("file_name"));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to load lost item photos from SQLite.", e);
+        }
+
         try (Connection connection = connect(); Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery("SELECT id, name, category, date, location, status, claimant, school_year FROM lost_items ORDER BY id ASC")) {
             while (rs.next()) {
@@ -162,6 +229,7 @@ public final class DataStore {
                         rs.getString("claimant"),
                         rs.getString("school_year")
                 );
+                item.getPhotoNames().setAll(photoNamesByItem.getOrDefault(item.getId(), List.of()));
                 attachLostItemListeners(item);
                 ITEMS.add(item);
             }
@@ -242,6 +310,7 @@ public final class DataStore {
         item.statusProperty().addListener((obs, oldValue, newValue) -> persistItems());
         item.claimantProperty().addListener((obs, oldValue, newValue) -> persistItems());
         item.schoolYearProperty().addListener((obs, oldValue, newValue) -> persistItems());
+        item.getPhotoNames().addListener((ListChangeListener<String>) change -> persistItems());
     }
 
     private static void persistViolations() {
@@ -275,24 +344,85 @@ public final class DataStore {
     }
 
     private static void persistItems() {
-        try (Connection connection = connect(); PreparedStatement delete = connection.prepareStatement("DELETE FROM lost_items");
-             PreparedStatement insert = connection.prepareStatement(
-                     "INSERT INTO lost_items (id, name, category, date, location, status, claimant, school_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
-            delete.executeUpdate();
-            for (LostItem item : ITEMS) {
-                insert.setInt(1, item.getId());
-                insert.setString(2, item.getName());
-                insert.setString(3, item.getCategory());
-                insert.setString(4, item.getDate().toString());
-                insert.setString(5, item.getLocation());
-                insert.setString(6, item.getStatus());
-                insert.setString(7, item.getClaimant());
-                insert.setString(8, item.getSchoolYear());
-                insert.addBatch();
+        try (Connection connection = connect()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement deletePhotos = connection.prepareStatement("DELETE FROM lost_item_photos");
+                 PreparedStatement deleteItems = connection.prepareStatement("DELETE FROM lost_items");
+                 PreparedStatement insertItem = connection.prepareStatement(
+                         "INSERT INTO lost_items (id, name, category, date, location, status, claimant, school_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                 PreparedStatement insertPhoto = connection.prepareStatement(
+                         "INSERT INTO lost_item_photos (item_id, position, file_name) VALUES (?, ?, ?)")) {
+                deletePhotos.executeUpdate();
+                deleteItems.executeUpdate();
+                for (LostItem item : ITEMS) {
+                    insertItem.setInt(1, item.getId());
+                    insertItem.setString(2, item.getName());
+                    insertItem.setString(3, item.getCategory());
+                    insertItem.setString(4, item.getDate().toString());
+                    insertItem.setString(5, item.getLocation());
+                    insertItem.setString(6, item.getStatus());
+                    insertItem.setString(7, item.getClaimant());
+                    insertItem.setString(8, item.getSchoolYear());
+                    insertItem.addBatch();
+
+                    for (int position = 0; position < item.getPhotoNames().size(); position++) {
+                        insertPhoto.setInt(1, item.getId());
+                        insertPhoto.setInt(2, position);
+                        insertPhoto.setString(3, item.getPhotoNames().get(position));
+                        insertPhoto.addBatch();
+                    }
+                }
+                insertItem.executeBatch();
+                insertPhoto.executeBatch();
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
             }
-            insert.executeBatch();
         } catch (SQLException e) {
             throw new IllegalStateException("Unable to persist lost item data to SQLite.", e);
+        }
+    }
+
+    public static String copyItemPhoto(int itemId, Path source) throws IOException {
+        String originalName = source.getFileName().toString();
+        int extensionIndex = originalName.lastIndexOf('.');
+        String extension = extensionIndex < 0 ? "" : originalName.substring(extensionIndex).toLowerCase(Locale.ROOT);
+        if (!List.of(".png", ".jpg", ".jpeg", ".gif", ".bmp").contains(extension)) {
+            extension = "";
+        }
+        String fileName = UUID.randomUUID() + extension;
+        Path itemDirectory = ITEM_PHOTOS_PATH.resolve(Integer.toString(itemId));
+        Files.createDirectories(itemDirectory);
+        Files.copy(source, itemDirectory.resolve(fileName));
+        return fileName;
+    }
+
+    public static Path getItemPhotoPath(int itemId, String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new IllegalArgumentException("Invalid lost item photo file name.");
+        }
+        Path filePath = Paths.get(fileName);
+        if (filePath.isAbsolute() || filePath.getNameCount() != 1
+                || ".".equals(fileName) || "..".equals(fileName) || fileName.contains(":")) {
+            throw new IllegalArgumentException("Invalid lost item photo file name.");
+        }
+        return ITEM_PHOTOS_PATH.resolve(Integer.toString(itemId)).resolve(fileName);
+    }
+
+    public static void deleteItemPhoto(int itemId, String fileName) throws IOException {
+        Path photoPath = getItemPhotoPath(itemId, fileName);
+        Files.deleteIfExists(photoPath);
+        try {
+            Files.deleteIfExists(photoPath.getParent());
+        } catch (DirectoryNotEmptyException ignored) {
+            // Other photos for this item still use the folder.
+        }
+    }
+
+    public static void deleteItemPhotos(LostItem item) throws IOException {
+        for (String fileName : item.getPhotoNames()) {
+            deleteItemPhoto(item.getId(), fileName);
         }
     }
 

@@ -29,6 +29,7 @@
 
      <TableView fx:id="table" VBox.vgrow="ALWAYS">
          <columns>
+             <TableColumn fx:id="colPhoto" text="Photo" prefWidth="100"/>
              <TableColumn fx:id="colName" text="Item" prefWidth="200"/>
              <TableColumn fx:id="colCategory" text="Category" prefWidth="130"/>
              <TableColumn fx:id="colDate" text="Date" prefWidth="100"/>

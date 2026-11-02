@@ -54,5 +54,19 @@
                 <yAxis><NumberAxis fx:id="yAxis" label="Count"/></yAxis>
             </BarChart>
         </VBox>
+
+        <VBox styleClass="panel, dashboard-export-panel" spacing="12">
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="XLS" styleClass="dashboard-export-icon"/>
+                <VBox spacing="5">
+                    <Label text="EXPORT RECORDS" styleClass="dashboard-export-heading"/>
+                    <Label text="Download violations and lost-and-found records for the school year selected above as an Excel workbook."
+                           styleClass="dashboard-export-description" wrapText="true"/>
+                </VBox>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button fx:id="exportButton" text="Export to Excel" styleClass="btn-primary, dashboard-export-button"
+                        onAction="#exportExcel"/>
+            </HBox>
+        </VBox>
     </VBox>
 </ScrollPane>

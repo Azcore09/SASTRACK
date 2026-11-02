@@ -1,6 +1,7 @@
 package com.sastrack.controller;
 
 import com.sastrack.data.DataStore;
+import com.sastrack.data.ExcelExportService;
 import com.sastrack.model.LostItem;
 import com.sastrack.model.Violation;
 import javafx.animation.ScaleTransition;
@@ -9,6 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -16,8 +18,12 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.format.TextStyle;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -31,6 +37,7 @@ public class DashboardController implements MainController.MainAware {
     @FXML private ComboBox<String> schoolYearCombo;
     @FXML private Button newSchoolYearBtn;
     @FXML private Button deleteSchoolYearBtn;
+    @FXML private Button exportButton;
     @FXML private Label statTotal;
     @FXML private Label statItems;
     @FXML private Label statActive;
@@ -88,6 +95,7 @@ public class DashboardController implements MainController.MainAware {
         if (schoolYearCombo.getItems().isEmpty()) {
             schoolYearCombo.setValue(null);
             deleteSchoolYearBtn.setDisable(true);
+            exportButton.setDisable(true);
             return;
         }
 
@@ -96,6 +104,7 @@ public class DashboardController implements MainController.MainAware {
             schoolYearCombo.getSelectionModel().selectFirst();
         }
         deleteSchoolYearBtn.setDisable(schoolYearCombo.getValue() == null);
+        exportButton.setDisable(schoolYearCombo.getValue() == null);
     }
 
     @FXML
@@ -151,6 +160,46 @@ public class DashboardController implements MainController.MainAware {
                 refresh();
             }
         });
+    }
+
+    @FXML
+    private void exportExcel() {
+        String schoolYear = schoolYearCombo.getValue();
+        if (schoolYear == null) {
+            return;
+        }
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export School Year Records");
+        chooser.setInitialFileName("SAS-TRACK-" + schoolYear + ".xlsx");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Excel Workbook (*.xlsx)", "*.xlsx"));
+
+        File selectedFile = chooser.showSaveDialog(exportButton.getScene().getWindow());
+        if (selectedFile == null) {
+            return;
+        }
+
+        Path destination = selectedFile.toPath();
+        if (!selectedFile.getName().toLowerCase(Locale.ROOT).endsWith(".xlsx")) {
+            destination = selectedFile.toPath().resolveSibling(selectedFile.getName() + ".xlsx");
+        }
+
+        try {
+            ExcelExportService.export(destination, schoolYear,
+                    List.copyOf(DataStore.VIOLATIONS), List.copyOf(DataStore.ITEMS));
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setTitle("Export Complete");
+            success.setHeaderText("Excel workbook created");
+            success.setContentText("Saved to:\n" + destination.toAbsolutePath());
+            success.showAndWait();
+        } catch (IOException e) {
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Export Failed");
+            error.setHeaderText("Could not create the Excel workbook");
+            error.setContentText("Unable to save the export to the selected location.\n" + e.getMessage());
+            error.showAndWait();
+        }
     }
 
     /** Small scale-up animation so stat cards feel clickable on hover. */

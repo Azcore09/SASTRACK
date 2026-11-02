@@ -1,5 +1,7 @@
 package com.sastrack.app;
 
+import com.sastrack.sync.SyncConfig;
+import com.sastrack.sync.SyncService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -12,6 +14,8 @@ import java.io.IOException;
 public class MainApp extends Application {
 
     private static Stage primaryStage;
+    private static final SyncConfig SYNC_CONFIG = new SyncConfig();
+    private static final SyncService SYNC_SERVICE = new SyncService(SYNC_CONFIG);
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -20,6 +24,7 @@ public class MainApp extends Application {
         // To make the application window fill the screen on launch.
         stage.setMaximized(true);
         // For true fullscreen (hides OS chrome) use: stage.setFullScreen(true);
+        SYNC_SERVICE.runStartupSync();
         showLogin();
         stage.show();
         Platform.runLater(() -> {
@@ -28,6 +33,14 @@ public class MainApp extends Application {
                 stage.setMaximized(true);
             }
         });
+    }
+
+    public static SyncConfig getSyncConfig() {
+        return SYNC_CONFIG;
+    }
+
+    public static SyncService getSyncService() {
+        return SYNC_SERVICE;
     }
 
     public static void showLogin() throws IOException {

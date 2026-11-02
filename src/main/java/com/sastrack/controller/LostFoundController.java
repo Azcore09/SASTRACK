@@ -5,15 +5,25 @@ import com.sastrack.data.DataStore;
 import com.sastrack.model.LostItem;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
 
@@ -24,6 +34,7 @@ public class LostFoundController implements MainController.MainAware {
     @FXML private ComboBox<String> schoolYearFilterBox;
     @FXML private TableView<LostItem> table;
     @FXML private TableColumn<LostItem, String> colName;
+    @FXML private TableColumn<LostItem, String> colPhoto;
     @FXML private TableColumn<LostItem, String> colCategory;
     @FXML private TableColumn<LostItem, LocalDate> colDate;
      @FXML private TableColumn<LostItem, String> colLocation;
@@ -44,12 +55,56 @@ public class LostFoundController implements MainController.MainAware {
     @FXML
     public void initialize() {
          colName.setCellValueFactory(new PropertyValueFactory<>("name"));
+         colPhoto.setCellValueFactory(cellData -> Bindings.createStringBinding(
+                 () -> cellData.getValue().getPhotoNames().isEmpty()
+                         ? null
+                         : cellData.getValue().getPhotoNames().get(0),
+                 cellData.getValue().getPhotoNames()));
+         colPhoto.setCellFactory(column -> new TableCell<>() {
+             private final ImageView imageView = new ImageView();
+
+             {
+                 imageView.setFitWidth(72);
+                 imageView.setFitHeight(72);
+                 imageView.setPreserveRatio(true);
+             }
+
+             @Override
+             protected void updateItem(String fileName, boolean empty) {
+                 super.updateItem(fileName, empty);
+                 setText(null);
+                 if (empty || fileName == null) {
+                     setGraphic(null);
+                     return;
+                 }
+                 LostItem rowItem = getTableRow() == null ? null : getTableRow().getItem();
+                 if (rowItem == null) {
+                     setGraphic(null);
+                     return;
+                 }
+                 Path photoPath = DataStore.getItemPhotoPath(rowItem.getId(), fileName);
+                 if (!Files.isRegularFile(photoPath)) {
+                     setText("Unavailable");
+                     setGraphic(null);
+                     return;
+                 }
+                 Image image = new Image(photoPath.toUri().toString(), 72, 72, true, true);
+                 if (image.isError()) {
+                     setText("Unavailable");
+                     setGraphic(null);
+                     return;
+                 }
+                 imageView.setImage(image);
+                 setGraphic(imageView);
+             }
+         });
          colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
          colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
          colLocation.setCellValueFactory(new PropertyValueFactory<>("location"));
          colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
          colClaimant.setCellValueFactory(new PropertyValueFactory<>("claimant"));
          colSchoolYear.setCellValueFactory(new PropertyValueFactory<>("schoolYear"));
+         table.setFixedCellSize(84);
          table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
          table.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
              boolean hasSelection = newValue != null;
@@ -122,6 +177,11 @@ public class LostFoundController implements MainController.MainAware {
         confirm.showAndWait().ifPresent(result -> {
             if (result == ButtonType.OK) {
                 DataStore.ITEMS.remove(selected);
+                try {
+                    DataStore.deleteItemPhotos(selected);
+                } catch (IOException e) {
+                    showPhotoError("The item was deleted, but its photos could not be removed.", e);
+                }
                 refresh();
             }
         });
@@ -206,6 +266,8 @@ public class LostFoundController implements MainController.MainAware {
              {"School Year:", item.getSchoolYear()}
          });
 
+         addItemPhotos(contentBox, item);
+
          ScrollPane scrollPane = new ScrollPane(contentBox);
          scrollPane.setStyle("-fx-background-color: white; -fx-padding: 0;");
          scrollPane.setFitToWidth(true);
@@ -264,6 +326,42 @@ public class LostFoundController implements MainController.MainAware {
          parent.getChildren().add(sectionBox);
      }
 
+     private void addItemPhotos(javafx.scene.layout.VBox parent, LostItem item) {
+         javafx.scene.layout.VBox sectionBox = new javafx.scene.layout.VBox(12);
+         sectionBox.setStyle("-fx-padding: 16 0 0 0;");
+         Label sectionLabel = new Label("Photos");
+         sectionLabel.setStyle(
+                 "-fx-font-size: 12px;" +
+                 "-fx-font-weight: bold;" +
+                 "-fx-text-fill: #2f6fed;" +
+                 "-fx-padding: 0 0 8 0;"
+         );
+         FlowPane gallery = new FlowPane(12, 12);
+         if (item.getPhotoNames().isEmpty()) {
+             gallery.getChildren().add(new Label("No photos attached."));
+         } else {
+             for (String fileName : item.getPhotoNames()) {
+                 Path photoPath = DataStore.getItemPhotoPath(item.getId(), fileName);
+                 if (!Files.isRegularFile(photoPath)) {
+                     gallery.getChildren().add(new Label("Photo unavailable"));
+                     continue;
+                 }
+                 Image image = new Image(photoPath.toUri().toString(), 280, 220, true, true);
+                 if (image.isError()) {
+                     gallery.getChildren().add(new Label("Photo unavailable"));
+                     continue;
+                 }
+                 ImageView imageView = new ImageView(image);
+                 imageView.setFitWidth(280);
+                 imageView.setFitHeight(220);
+                 imageView.setPreserveRatio(true);
+                 gallery.getChildren().add(imageView);
+             }
+         }
+         sectionBox.getChildren().addAll(sectionLabel, gallery);
+         parent.getChildren().add(sectionBox);
+     }
+
      public void openItemDialog(LostItem existing) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle(existing == null ? "Log found item" : "Edit item record");
@@ -285,6 +383,82 @@ public class LostFoundController implements MainController.MainAware {
         ComboBox<String> schoolYearBox = new ComboBox<>(schoolYearOptions(defaultSchoolYear));
         schoolYearBox.setValue(defaultSchoolYear);
 
+        int itemId = existing == null ? DataStore.nextItemId() : existing.getId();
+        ObservableList<String> photoNames = FXCollections.observableArrayList(
+                existing == null ? List.of() : existing.getPhotoNames());
+        List<String> stagedPhotoNames = new ArrayList<>();
+        ListView<String> photoList = new ListView<>(photoNames);
+        photoList.setPrefHeight(120);
+        photoList.setCellFactory(list -> new ListCell<>() {
+            private final ImageView thumbnail = new ImageView();
+            private final Label label = new Label();
+            private final HBox row = new HBox(10, thumbnail, label);
+
+            {
+                thumbnail.setFitWidth(56);
+                thumbnail.setFitHeight(44);
+                thumbnail.setPreserveRatio(true);
+                row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            }
+
+            @Override
+            protected void updateItem(String fileName, boolean empty) {
+                super.updateItem(fileName, empty);
+                if (empty || fileName == null) {
+                    setGraphic(null);
+                    return;
+                }
+                Path photoPath = DataStore.getItemPhotoPath(itemId, fileName);
+                label.setText("Photo " + (getIndex() + 1));
+                if (Files.isRegularFile(photoPath)) {
+                    Image image = new Image(photoPath.toUri().toString(), 56, 44, true, true);
+                    thumbnail.setImage(image.isError() ? null : image);
+                } else {
+                    thumbnail.setImage(null);
+                }
+                setGraphic(row);
+            }
+        });
+        Button addPhotosButton = new Button("Add photos");
+        Button removePhotoButton = new Button("Remove selected");
+        removePhotoButton.disableProperty().bind(photoList.getSelectionModel().selectedItemProperty().isNull());
+        addPhotosButton.setOnAction(event -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Select item photos");
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                    "Image files", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp"));
+            Window owner = dialog.getDialogPane().getScene().getWindow();
+            List<File> selectedFiles = chooser.showOpenMultipleDialog(owner);
+            if (selectedFiles == null) {
+                return;
+            }
+            for (File file : selectedFiles) {
+                try {
+                    String fileName = DataStore.copyItemPhoto(itemId, file.toPath());
+                    stagedPhotoNames.add(fileName);
+                    photoNames.add(fileName);
+                } catch (IOException e) {
+                    showPhotoError("Unable to copy the selected photo.", e);
+                }
+            }
+        });
+        removePhotoButton.setOnAction(event -> {
+            String selectedPhoto = photoList.getSelectionModel().getSelectedItem();
+            if (selectedPhoto == null) {
+                return;
+            }
+            if (stagedPhotoNames.contains(selectedPhoto)) {
+                try {
+                    DataStore.deleteItemPhoto(itemId, selectedPhoto);
+                    stagedPhotoNames.remove(selectedPhoto);
+                } catch (IOException e) {
+                    showPhotoError("Unable to remove the selected photo.", e);
+                    return;
+                }
+            }
+            photoNames.remove(selectedPhoto);
+        });
+
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(14));
         int r = 0;
@@ -295,28 +469,63 @@ public class LostFoundController implements MainController.MainAware {
         grid.addRow(r++, new Label("Status"), statusBox);
         grid.addRow(r++, new Label("Claimant"), claimantField);
         grid.addRow(r++, new Label("School year"), schoolYearBox);
+        HBox photoActions = new HBox(8, addPhotosButton, removePhotoButton);
+        VBox photoControls = new VBox(8, photoList, photoActions);
+        grid.addRow(r, new Label("Photos"), photoControls);
         dialog.getDialogPane().setContent(grid);
 
         Optional<ButtonType> result = dialog.showAndWait();
-        if (result.isPresent() && result.get() == saveType) {
-            if (nameField.getText().trim().isEmpty()) return;
+        if (result.isPresent() && result.get() == saveType && !nameField.getText().trim().isEmpty()) {
             String selectedSchoolYear = schoolYearBox.getValue() == null ? currentSchoolYear() : schoolYearBox.getValue();
             if (!DataStore.SCHOOL_YEARS.contains(selectedSchoolYear)) {
                 DataStore.SCHOOL_YEARS.add(selectedSchoolYear);
             }
             if (existing == null) {
-                DataStore.ITEMS.add(new LostItem(
-                        DataStore.nextItemId(), nameField.getText().trim(), categoryBox.getValue(),
+                LostItem item = new LostItem(
+                        itemId, nameField.getText().trim(), categoryBox.getValue(),
                         datePicker.getValue(), locationField.getText().trim(), statusBox.getValue(),
                         "Claimed".equals(statusBox.getValue()) ? claimantField.getText().trim() : "",
-                        selectedSchoolYear));
+                        selectedSchoolYear);
+                item.getPhotoNames().setAll(photoNames);
+                DataStore.ITEMS.add(item);
             } else {
+                List<String> removedPhotoNames = new ArrayList<>(existing.getPhotoNames());
+                removedPhotoNames.removeAll(photoNames);
                 existing.setStatus(statusBox.getValue());
                 existing.setClaimant("Claimed".equals(statusBox.getValue()) ? claimantField.getText().trim() : "");
                 existing.setSchoolYear(selectedSchoolYear);
+                existing.getPhotoNames().setAll(photoNames);
+                for (String removedPhotoName : removedPhotoNames) {
+                    try {
+                        DataStore.deleteItemPhoto(itemId, removedPhotoName);
+                    } catch (IOException e) {
+                        showPhotoError("The item was saved, but a removed photo could not be deleted.", e);
+                    }
+                }
             }
+            stagedPhotoNames.clear();
             refresh();
+        } else {
+            cleanupStagedPhotos(itemId, stagedPhotoNames);
         }
+    }
+
+    private void cleanupStagedPhotos(int itemId, List<String> stagedPhotoNames) {
+        for (String fileName : stagedPhotoNames) {
+            try {
+                DataStore.deleteItemPhoto(itemId, fileName);
+            } catch (IOException e) {
+                showPhotoError("Unable to clean up an unsaved photo.", e);
+            }
+        }
+    }
+
+    private void showPhotoError(String message, IOException exception) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Photo Error");
+        alert.setHeaderText(message);
+        alert.setContentText(exception.getMessage());
+        alert.showAndWait();
     }
 
     private ObservableList<String> schoolYearOptions(String preferredValue) {

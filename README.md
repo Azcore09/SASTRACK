@@ -47,6 +47,8 @@ The packaged app is created under `build/jpackage/` and can be launched directly
   Active violations, Resolved cases) that jump straight to the filtered
   table behind each number. The violations chart toggles between "by month"
   (within the selected school year) and "by year" (across all school years).
+  Scroll to the bottom to export the selected school year's violations and
+  lost-and-found records to a two-sheet Excel workbook.
 - **School year archive** — every record carries a `schoolYear` field.
   Dashboard and both table views have a School Year filter so you can pull
   up 2025-2026 records without touching 2026-2027 data.

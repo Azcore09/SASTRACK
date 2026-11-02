@@ -1,6 +1,8 @@
 package com.sastrack.model;
 
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import java.time.LocalDate;
 
 public class LostItem {
@@ -12,6 +14,7 @@ public class LostItem {
     private final StringProperty status = new SimpleStringProperty(); // Unclaimed / Claimed
     private final StringProperty claimant = new SimpleStringProperty();
     private final StringProperty schoolYear = new SimpleStringProperty();
+    private final ObservableList<String> photoNames = FXCollections.observableArrayList();
 
     public LostItem(int id, String name, String category, LocalDate date, String location,
                      String status, String claimant, String schoolYear) {
@@ -51,4 +54,6 @@ public class LostItem {
     public String getSchoolYear() { return schoolYear.get(); }
     public void setSchoolYear(String v) { schoolYear.set(v); }
     public StringProperty schoolYearProperty() { return schoolYear; }
+
+    public ObservableList<String> getPhotoNames() { return photoNames; }
 }
